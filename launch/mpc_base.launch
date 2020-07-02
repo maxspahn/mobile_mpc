@@ -1,0 +1,10 @@
+<launch>
+  <!-- arg name="argument name" default="default_value"/-->
+
+  
+  <node name="mpc_node" pkg="mobile_mpc" type="mpc_base_node.py" respawn="false" output="screen">
+  </node>
+  <!--node name="mpc_goal_publisher" pkg="mobile_mpc" type="send_mpc_base_goal.py" respawn="false" output="screen">
+  </node-->
+
+</launch>

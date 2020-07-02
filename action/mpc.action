@@ -1,0 +1,12 @@
+# goal definition
+std_msgs/Float64MultiArray goal
+std_msgs/Float64MultiArray errorWeights
+std_msgs/Float64MultiArray mpcWeights
+std_msgs/Float64 maxError
+---
+#result definition
+bool success
+std_msgs/Float64MultiArray finalState
+---
+#result feedback
+int32 errorFlag

@@ -1,0 +1,76 @@
+#! /usr/bin/env python
+
+import rospy
+
+# Brings in the SimpleActionClient
+import actionlib
+import numpy as np
+
+from std_msgs.msg import Float64MultiArray, Float64
+
+# Brings in the messages used by the fibonacci action, including the
+# goal message and the result message.
+import mobile_mpc.msg
+
+
+def mpc_client():
+    # Creates the SimpleActionClient, passing the type of the action
+    # (FibonacciAction) to the constructor.
+    client = actionlib.SimpleActionClient("mpc", mobile_mpc.msg.mpcAction)
+
+    # Waits until the action server has started up and started
+    # listening for goals.
+    client.wait_for_server()
+
+    # Creates a goal to send to the action server.
+    errorWeights = Float64MultiArray()
+    errorWeights.data = np.array([1.0, 1.0, 0.5])
+    myMaxError = Float64()
+    myMaxError.data = 0.5
+    myMPCWeights = Float64MultiArray()
+    myMPCWeights.data = np.array([10.0, 10000000.0, 1.0, 1000.0, 1.0, 1.0])
+    goals = []
+    goalData1 = Float64MultiArray()
+    goalData1.data = np.array([5, -1, 0, 1, 0, 0, -1, 0, 1, 0])
+    goals.append(goalData1)
+    """
+    goalData2 = Float64MultiArray()
+    goalData2.data = np.array([3, 3, -1, 1, 0, 0, -1, 0, 1, 0])
+    goals.append(goalData2)
+    goalData3 = Float64MultiArray()
+    goalData3.data = np.array([1, 7, -1, 1, -1, 0, -1, 0, 1, 0])
+    goals.append(goalData3)
+    goalData3 = Float64MultiArray()
+    goalData3.data = np.array([0, 0, 0, 1, -1, 0, -1, 0, 1, 0])
+    goals.append(goalData3)
+    """
+
+    for oneGoal in goals:
+        goal = mobile_mpc.msg.mpcGoal(
+            goal=oneGoal,
+            errorWeights=errorWeights,
+            maxError=myMaxError,
+            mpcWeights=myMPCWeights,
+        )
+
+        # Sends the goal to the action server.
+        client.send_goal(goal)
+
+        # Waits for the server to finish performing the action.
+        client.wait_for_result()
+
+        # Prints out the result of executing the action
+        result = client.get_result()
+        print("Result:", result.success)
+        print("Final State : ", result.finalState.data)
+    return client.get_result()  # A FibonacciResult
+
+
+if __name__ == "__main__":
+    try:
+        # Initializes a rospy node so that the SimpleActionClient can
+        # publish and subscribe over ROS.
+        rospy.init_node("mpc_client_node")
+        result = mpc_client()
+    except rospy.ROSInterruptException:
+        print("program interrupted before completion")

@@ -1,0 +1,25 @@
+#!/usr/bin/env python  
+import roslib
+import rospy
+import math
+import tf
+import geometry_msgs.msg
+from std_msgs.msg import Float64MultiArray
+
+if __name__ == '__main__':
+    rospy.init_node('ObstaclePublisher')
+    pub = rospy.Publisher('obstaclePublisher', Float64MultiArray, queue_size=10)
+    listener = tf.TransformListener()
+
+    rate = rospy.Rate(10.0)
+    while not rospy.is_shutdown():
+        try:
+            (trans,rot) = listener.lookupTransform('/base_link', '/sphere_base', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        f = Float64MultiArray()
+        f.data = trans
+        pub.publish(f)
+
+        rate.sleep()
