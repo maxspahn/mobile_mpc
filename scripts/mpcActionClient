@@ -28,22 +28,11 @@ def mpc_client():
     myMaxError = Float64()
     myMaxError.data = 0.5
     myMPCWeights = Float64MultiArray()
-    myMPCWeights.data = np.array([10.0, 10000000.0, 1.0, 1000.0, 1.0, 1.0])
+    myMPCWeights.data = np.array([1, 100, 5, 1000000000, 0.5, 10])
     goals = []
     goalData1 = Float64MultiArray()
-    goalData1.data = np.array([5, -1, 0, 1, 0, 0, -1, 0, 1, 0])
+    goalData1.data = np.array([3.25, 0, -1.57, 1, 0, 0, -1, 0, 1, 0])
     goals.append(goalData1)
-    """
-    goalData2 = Float64MultiArray()
-    goalData2.data = np.array([3, 3, -1, 1, 0, 0, -1, 0, 1, 0])
-    goals.append(goalData2)
-    goalData3 = Float64MultiArray()
-    goalData3.data = np.array([1, 7, -1, 1, -1, 0, -1, 0, 1, 0])
-    goals.append(goalData3)
-    goalData3 = Float64MultiArray()
-    goalData3.data = np.array([0, 0, 0, 1, -1, 0, -1, 0, 1, 0])
-    goals.append(goalData3)
-    """
 
     for oneGoal in goals:
         goal = mobile_mpc.msg.mpcGoal(
