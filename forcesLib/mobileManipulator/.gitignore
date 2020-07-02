@@ -1,4 +1,6 @@
-mm_MPC*
 *.forces
+__pycache__
 @*
 *.m~
+*.pyc
+mm_MPC_mex_compiler_warnings.txt
