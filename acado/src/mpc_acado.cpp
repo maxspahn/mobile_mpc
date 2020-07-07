@@ -44,25 +44,25 @@ int main( ){
     Control               v1,v2,q1dot,q2dot,q3dot,q4dot,q5dot,q6dot,q7dot,sv1;
     DifferentialEquation  f;
 
-    OnlineData x_d;
-    OnlineData y_d;
-    OnlineData theta_d;
-    OnlineData q1_d;
-    OnlineData q2_d;
-    OnlineData q3_d;
-    OnlineData q4_d;
-    OnlineData q5_d;
-    OnlineData q6_d;
-    OnlineData q7_d;
+    OnlineData x_d; //0
+    OnlineData y_d; //1
+    OnlineData theta_d; //2
+    OnlineData q1_d; //3
+    OnlineData q2_d; //4
+    OnlineData q3_d; //5
+    OnlineData q4_d; //6
+    OnlineData q5_d; //7
+    OnlineData q6_d; //8
+    OnlineData q7_d; //9
 
-    OnlineData r;
-    OnlineData L;
-    OnlineData w_x;
-    OnlineData w_o;
-    OnlineData w_q;
-    OnlineData w_u;
-    OnlineData w_qdot;
-    OnlineData w_slack;
+    OnlineData r; //10
+    OnlineData L; //11
+    OnlineData w_x; //12
+    OnlineData w_o; //13
+    OnlineData w_q; //14
+    OnlineData w_u; //15
+    OnlineData w_qdot; //16
+    OnlineData w_slack; //17
 
     /*
     OnlineData plane_p1;
@@ -108,12 +108,12 @@ int main( ){
     f << dot(q5) == q5dot;
     f << dot(q6) == q6dot;
     f << dot(q7) == q7dot;
-	  f << dot(s1) == sv1;
+    f << dot(s1) == sv1;
 
     // DEFINE AN OPTIMAL CONTROL PROBLEM:
     // ----------------------------------
     // ocp(0.0, time_horizon, steps)
-    OCP ocp( 0.0, 2, 20.0 );
+    OCP ocp( 0.0, 4.0, 8.0 );
 
     // Need to set the number of online variables!
     // Count with :%s/pattern//gn

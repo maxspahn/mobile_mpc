@@ -7,7 +7,15 @@ project(mobile_mpc)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs)
+find_package(catkin REQUIRED COMPONENTS
+  actionlib_msgs
+  roscpp
+  rospy
+  std_msgs
+  tf
+  sensor_msgs
+  genmsg
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -110,8 +118,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+  include
+  acado/generated_mpc
+  acado/generated_mpc/qpoases/INCLUDE
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -128,6 +138,98 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/mobile_mpc_node.cpp)
+add_executable(myTalker src/mpc_test.cpp)
+target_link_libraries(myTalker ${catkin_LIBRARIES})
+add_executable(rightWheelPub src/command_base.cpp)
+target_link_libraries(rightWheelPub ${catkin_LIBRARIES})
+add_library(custom_acado
+  acado/generated_mpc/test.c
+  acado/generated_mpc/acado_auxiliary_functions.c
+  acado/generated_mpc/acado_hessian_regularization.c
+  acado/generated_mpc/acado_qpoases_interface.cpp
+  acado/generated_mpc/acado_solver.c
+  acado/generated_mpc/acado_integrator.c
+  acado/generated_mpc/qpoases/SRC/Bounds.cpp
+  acado/generated_mpc/qpoases/SRC/Constraints.cpp
+  acado/generated_mpc/qpoases/SRC/CyclingManager.cpp
+  acado/generated_mpc/qpoases/SRC/Indexlist.cpp
+  acado/generated_mpc/qpoases/SRC/MessageHandling.cpp
+  acado/generated_mpc/qpoases/SRC/MessageHandling.ipp
+  acado/generated_mpc/qpoases/SRC/QProblem.cpp
+  acado/generated_mpc/qpoases/SRC/QProblemB.cpp
+  acado/generated_mpc/qpoases/SRC/SubjectTo.cpp
+  acado/generated_mpc/qpoases/SRC/Utils.cpp
+  acado/generated_mpc/qpoases/SRC/EXTRAS/SolutionAnalysis.cpp
+)
+target_include_directories(custom_acado PUBLIC
+  acado/generated_mpc/qpoases/SRC
+  acado/generated_mpc/qpoases/INCLUDE
+)
+target_link_libraries(custom_acado ${catkin_LIBRARIES})
+
+add_library(mpc_acado
+  src/mpc_acado.cpp
+)
+##target_include_directories(mpc_acado PUBLIC
+##  acado/generated_mpc/qpoases/SRC
+##  acado/generated_mpc/qpoases/INCLUDE
+##)
+target_link_libraries(mpc_acado 
+  custom_acado
+  ${catkin_LIBRARIES}
+)
+
+add_executable(mpc_acado_node src/mpc_node.cpp)
+target_link_libraries(mpc_acado_node
+  mpc_acado
+  ${catkin_LIBRARIES}
+)
+
+add_library(mpc_problem src/mpc_problem.cpp)
+target_link_libraries(mpc_problem
+  custom_acado
+  ${catkin_LIBRARIES}
+)
+add_library(mpc_solver src/mpc_solver.cpp)
+target_link_libraries(mpc_solver
+  custom_acado
+  mpc_problem
+  ${catkin_LIBRARIES}
+)
+
+add_library(mpc_interface src/mpc_interface.cpp)
+target_link_libraries(mpc_interface
+  custom_acado
+  mpc_problem
+  mpc_solver
+  ${catkin_LIBRARIES}
+)
+
+add_executable(mpc_node_pro src/mpc_node_pro.cpp)
+target_link_libraries(mpc_node_pro
+  custom_acado
+  mpc_interface
+  mpc_problem
+  mpc_solver
+  ${catkin_LIBRARIES}
+)
+
+add_executable(mpc_server
+  src/mpc_action_server.cpp
+)
+target_link_libraries(mpc_server
+  mpc_interface
+  ${catkin_LIBRARIES}
+)
+
+add_executable(mpc_client
+  src/mpc_action_client.cpp
+)
+target_link_libraries(mpc_client
+  mpc_interface
+  ${catkin_LIBRARIES}
+)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -198,3 +300,6 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+# Activate Debug mode
+# set(CMAKE_BUILD_TYPE Debug)
