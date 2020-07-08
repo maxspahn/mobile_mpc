@@ -16,7 +16,7 @@ import mobile_mpc.msg
 def mpc_client():
     # Creates the SimpleActionClient, passing the type of the action
     # (FibonacciAction) to the constructor.
-    client = actionlib.SimpleActionClient("mpc", mobile_mpc.msg.mpcAction)
+    client = actionlib.SimpleActionClient("mpc_server", mobile_mpc.msg.mpcAction)
 
     # Waits until the action server has started up and started
     # listening for goals.
@@ -24,15 +24,19 @@ def mpc_client():
 
     # Creates a goal to send to the action server.
     errorWeights = Float64MultiArray()
-    errorWeights.data = np.array([1.0, 1.0, 0.5])
+    errorWeights.data = np.array([1.0, 0.5, 1.0])
     myMaxError = Float64()
-    myMaxError.data = 0.5
+    myMaxError.data = 0.15
     myMPCWeights = Float64MultiArray()
     myMPCWeights.data = np.array([1, 100, 5, 1000000000, 0.5, 10])
+    myMPCWeights.data = np.array([100, 5, 5, 0.5, 10, 1000000000])
     goals = []
     goalData1 = Float64MultiArray()
-    goalData1.data = np.array([3.25, 0, -1.57, 1, 0, 0, -1, 0, 1, 0])
+    goalData1.data = np.array([3, -3, -1.57, 1, 0, 0, -1, 0, 1, 0])
+    goalData2 = Float64MultiArray()
+    goalData2.data = np.array([-3, 3, 1.57, 1.5, 1.2, 0, -1, 0, 2, 0])
     goals.append(goalData1)
+    goals.append(goalData2)
 
     for oneGoal in goals:
         goal = mobile_mpc.msg.mpcGoal(
