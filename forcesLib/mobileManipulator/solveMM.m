@@ -80,6 +80,7 @@ plot(goal_base_pos(1), goal_base_pos(2), 'rx');
 r = 0.1;
 L = 0.9;
 params = repmat([dt, r, L, goal', weights, safetyMargin, planes', obstacles'], 1, H)';
+params = repmat([dt, r, L, goal', weights, safetyMargin], 1, H)';
 problem.all_parameters = params;
 
 curState = start;

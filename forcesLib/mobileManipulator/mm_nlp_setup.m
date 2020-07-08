@@ -47,10 +47,10 @@ rad2deg = @(rad) rad/pi*180; % convert radians into degrees
 
 %% Problem dimensions
 model.N = 20;                                       % horizon length
-nbObstacles = 5;
-nbSpheres = 6;                                          % base + 5 for the arm
+nbObstacles = 0;
+nbSpheres = 0;                                          % base + 5 for the arm
 nbSelfCollision = 0;
-nbPlanes = 8;
+nbPlanes = 0;
 nbInequalities = (nbObstacles + nbPlanes) * nbSpheres + nbSelfCollision; 
 model.nh = nbInequalities;   % number of inequality constraint functions
 

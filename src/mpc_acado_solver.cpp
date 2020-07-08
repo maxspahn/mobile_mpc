@@ -1,8 +1,5 @@
 #include "mpc_acado_solver.h"
 
-ACADOvariables acadoVariables;
-ACADOworkspace acadoWorkspace;
-
 MpcSolver::MpcSolver() : maximalSteps_(100), solverTolerance_(0.001) {}
   
 MpcSolver::~MpcSolver() {}
