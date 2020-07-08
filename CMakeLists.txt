@@ -138,12 +138,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/mobile_mpc_node.cpp)
-add_executable(myTalker src/mpc_test.cpp)
-target_link_libraries(myTalker ${catkin_LIBRARIES})
-add_executable(rightWheelPub src/command_base.cpp)
-target_link_libraries(rightWheelPub ${catkin_LIBRARIES})
 add_library(custom_acado
-  acado/generated_mpc/test.c
   acado/generated_mpc/acado_auxiliary_functions.c
   acado/generated_mpc/acado_hessian_regularization.c
   acado/generated_mpc/acado_qpoases_interface.cpp
@@ -162,8 +157,9 @@ add_library(custom_acado
   acado/generated_mpc/qpoases/SRC/EXTRAS/SolutionAnalysis.cpp
 )
 target_include_directories(custom_acado PUBLIC
-  acado/generated_mpc/qpoases/SRC
   acado/generated_mpc/qpoases/INCLUDE
+  acado/generated_mpc/qpoases/SRC
+  acado/generated_mpc/qpoases
 )
 target_link_libraries(custom_acado ${catkin_LIBRARIES})
 

@@ -64,6 +64,11 @@ int main( ){
     OnlineData w_qdot; //16
     OnlineData w_slack; //17
 
+    OnlineData o1_x; // 18
+    OnlineData o1_y; // 19
+    OnlineData o1_z; // 20
+    OnlineData o1_r; // 21
+
     /*
     OnlineData plane_p1;
     OnlineData plane_p2;
@@ -117,7 +122,7 @@ int main( ){
 
     // Need to set the number of online variables!
     // Count with :%s/pattern//gn
-    ocp.setNOD(18);
+    ocp.setNOD(22);
 
 
 	  ocp.minimizeLagrangeTerm(
@@ -140,8 +145,8 @@ int main( ){
     // q_lim_franka_low = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973];
     // q_lim_franka_vel = [2.1750, 2.1750, 2.1750, 2.1750, 2.6100, 2.6100, 2.6100];
 
-    ocp.subjectTo( -5.0 <= v1 <= 5.0 );
-    ocp.subjectTo( -5.0 <= v2 <= 5.0 );
+    ocp.subjectTo( -4.0 <= v1 <= 4.0 );
+    ocp.subjectTo( -4.0 <= v2 <= 4.0 );
     ocp.subjectTo( -2.8973 <= q1 <= 2.8973);
     ocp.subjectTo( -1.7628 <= q2 <= 1.7628);
     ocp.subjectTo( -2.8973 <= q3 <= 2.8973);
@@ -157,6 +162,19 @@ int main( ){
     ocp.subjectTo( -2.6100 <= q6dot <= 2.6100 );
     ocp.subjectTo( -2.6100 <= q7dot <= 2.6100 );
     ocp.subjectTo( 0.0 <= s1 <= 1000000.0 );
+    ocp.subjectTo( -1.0 <= sv1 <= 1.0 );
+
+    // DEFINE COLLISION AVOIDANCE CONSTRAINTS
+    // -------------------------------------
+
+    Expression fk(3);
+    fk(0) = x + 0.25;
+    fk(1) = y;
+    fk(2) = 0.2;
+
+    Expression dist_o1_base(1);
+    dist_o1_base(0) = pow(pow(fk(0) - o1_x, 2) + pow(fk(1) - o1_y, 2) + pow(fk(2) - o1_z, 2) , 0.5);
+    ocp.subjectTo(dist_o1_base - o1_r + s1 >= 0);
 
 
     // DEFINE A PLOT WINDOW:

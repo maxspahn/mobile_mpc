@@ -84,6 +84,11 @@ void MpcInterface::setGoal(goalArray goal)
   mpcProblem_.goal(goal);
 }
 
+void MpcInterface::setObstacles(obstacleArray obstacles)
+{
+  mpcProblem_.obstacles(obstacles);
+}
+
 void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeightArray errorWeights)
 {
   mpcProblem_.goal(goal);
@@ -114,7 +119,7 @@ curUArray MpcInterface::solve()
   mpcProblem_.curU(curU_);
   mpcProblem_.curState(curState_);
   curUArray optCommands = mpcSolver_.solveMPC(mpcProblem_);
-  ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
+  //ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
   curU_[0] = optCommands[0];
   curU_[1] = optCommands[1];
   curU_[9] = optCommands[9];

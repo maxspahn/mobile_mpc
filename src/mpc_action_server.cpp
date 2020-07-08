@@ -6,6 +6,8 @@ MPCAction::MPCAction(std::string name) :
   mpcInterface_(name)
 {
   as_.start();
+  obstacleArray obstacles = {-1.5, 0.0, 0.0, 1.0};
+  mpcInterface_.setObstacles(obstacles);
 }
 
 MPCAction::~MPCAction()

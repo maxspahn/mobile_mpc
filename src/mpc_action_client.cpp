@@ -20,7 +20,7 @@ int main (int argc, char **argv)
   // send a goal to the action
   mobile_mpc::mpcGoal goal;
   // setup the goal
-  std::vector<double> targetData = {-1.0, 1.0, 0.0, 1.2, -0.3, 0.0, -1.0, 0.0, 2.1, 0.0};
+  std::vector<double> targetData = {-3.0, 3.0, -0.78, 1.2, -0.3, 0.0, -1.0, 0.0, 2.1, 0.0};
   std_msgs::Float64MultiArray targetConfig;
   targetConfig.layout.dim.push_back(std_msgs::MultiArrayDimension());
   targetConfig.layout.dim[0].size = targetData.size();
@@ -31,7 +31,7 @@ int main (int argc, char **argv)
   goal.goal = targetConfig;
   // setup the weights
   // w_x, w_o, w_q, w_u, w_qdot, w_slack
-  std::vector<double> weightsData = {150.0, 10.0, 1.0, 0.5, 20.0, 0.0};
+  std::vector<double> weightsData = {150.0, 10.0, 1.0, 0.5, 20.0, 1000000.0};
   std_msgs::Float64MultiArray weightsConfig;
   weightsConfig.layout.dim.push_back(std_msgs::MultiArrayDimension());
   weightsConfig.layout.dim[0].size = weightsData.size();

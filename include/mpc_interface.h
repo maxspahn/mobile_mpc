@@ -28,6 +28,7 @@ public:
   void singleMPCStep();
   void printState();
   void setGoal(goalArray);
+  void setObstacles(obstacleArray);
   void parseProblem(goalArray, weightArray, errorWeightArray);
   curUArray solve();
   void getState();

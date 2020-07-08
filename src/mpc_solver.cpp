@@ -20,11 +20,16 @@ std::array<double, 10> MpcSolver::solveMPC(MpcProblem& mp){
     acado_feedbackStep();
 	  acado_preparationStep();
     iter++;
+    //printf("Iteration step %d, KKT : %1.5f\n", iter, acado_getKKT());
   }
   std::array<double, 10> optCommands;
   for (int i = 0; i < 10; ++i) {
     optCommands[i] = acadoVariables.u[i+10];
   }
+  mp.slackVel(optCommands[9+10]);
+  mp.slackVar(acadoVariables.x[10+11]);
+  printf("Slack Variable : %1.5f\n", mp.slackVar());
+  printf("Slack Velocity: %1.5f\n", mp.slackVel());
   return optCommands;
 }
   
