@@ -133,4 +133,46 @@ void MpcProblem::setAcadoVariables(ACADOvariables& acadoVariables)
     acadoVariables.x0[i] = curState_[i];
   }
 }
+
+void MpcProblem::setForcesVariables(mm_MPC_params& params)
+{
+  for (int i = 0; i < (NX + NS); ++i) {
+    params.xinit[i] = curState_[i];
+  }
+  for (int i = 0; i < NU; ++i) {
+    params.xinit[i+(NX + NS)] = curU_[i];
+  }
+  int time_horizon = 19;
+  int forcesParams = 20;
+  for (int i = 0; i < time_horizon; ++i)
+  {
+    for (int j = 0; j < (NX + NS); ++j)
+    {
+      params.x0[i * (NX + NS + NU) + j] = curState_[j];
+    }
+    for (int j = 0; j < (NX + NS); ++j)
+    {
+      params.x0[i * (NX + NS + NU) + j + (NX + NS)] = curState_[j];
+    }
+    printf("Iteration %d and current index %d\n", i, i * forcesParams);
+    params.all_parameters[i * (forcesParams) + 0] = timeStep_;
+    printf("params.all_parameters[0] : %1.5f\n", params.all_parameters[0]);
+    params.all_parameters[i * (forcesParams) + 1] = params_[10];
+    params.all_parameters[i * (forcesParams) + 2] = params_[11];
+    for (int j = 0; j < 10; ++j)
+    {
+      params.all_parameters[i * (forcesParams) + 3 + j] = params_[j];
+    }
+    params.all_parameters[i * (forcesParams) + 13] = params_[14];
+    params.all_parameters[i * (forcesParams) + 14] = params_[12];
+    params.all_parameters[i * (forcesParams) + 15] = params_[13];
+    params.all_parameters[i * (forcesParams) + 16] = params_[17];
+    params.all_parameters[i * (forcesParams) + 17] = params_[15];
+    params.all_parameters[i * (forcesParams) + 18] = params_[16];
+    // safetyMargin
+    params.all_parameters[i * (forcesParams) + 19] = 0.0;
+  }
+      
+  printf("params at the end %1.5f", params.all_parameters[0]);
+}
   

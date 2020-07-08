@@ -121,6 +121,7 @@ include_directories(
   include
   acado/generated_mpc
   acado/generated_mpc/qpoases/INCLUDE
+  forcesLib/mobileManipulator/mm_MPC/include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -192,12 +193,21 @@ target_link_libraries(mpc_acado_solver
   mpc_problem
   ${catkin_LIBRARIES}
 )
+add_library(mpc_forces_solver 
+  src/mpc_forces_solver.cpp
+)
+target_link_libraries(mpc_forces_solver
+  mpc_problem
+  ${CMAKE_SOURCE_DIR}/forcesLib/mobileManipulator/mm_MPC/lib/libmm_MPC_withModel.so
+  ${catkin_LIBRARIES}
+)
 
 add_library(mpc_interface src/mpc_interface.cpp)
 target_link_libraries(mpc_interface
   custom_acado
   mpc_problem
   mpc_acado_solver
+  mpc_forces_solver
   ${catkin_LIBRARIES}
 )
 

@@ -10,6 +10,8 @@ class MpcSolver
 private:
   int maximalSteps_;
   double solverTolerance_;
+  ACADOvariables acadoVariables_;
+  ACADOworkspace acadoWorkspace_;
 
 public:
   MpcSolver();

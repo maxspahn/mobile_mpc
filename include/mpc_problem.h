@@ -7,6 +7,8 @@
 #include "acado_common.h"
 #include "acado_auxiliary_functions.h"
 
+#include "mm_MPC.h"
+
 #define NX          10  /* Number of differential state variables.  */
 #define NS          1   /* Number of slack variables. */
 #define NU          10  /* Number of control inputs. */
@@ -56,6 +58,7 @@ public:
   obstacleArray obstacles();
   void setupParams();
   void setAcadoVariables(ACADOvariables&);
+  void setForcesVariables(mm_MPC_params&);
 };
 
 #endif /* MPC_PROBLEM_H */  

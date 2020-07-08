@@ -8,7 +8,8 @@
 #include "sensor_msgs/JointState.h"
 #include "tf/transform_listener.h"
 
-#include "mpc_solver.h"
+#include "mpc_forces_solver.h"
+#include "mpc_acado_solver.h"
 #include "mpc_problem.h"
 
 #include <cmath>
@@ -36,7 +37,7 @@ public:
 
 private:
   MpcProblem mpcProblem_;
-  MpcSolver mpcSolver_;
+  MpcForcesSolver mpcSolver_;
   std::string name_;
   ros::NodeHandle nh_;
   ros::Rate rate_;
