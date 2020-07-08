@@ -29,7 +29,7 @@ def mpc_client():
     myMaxError.data = 0.15
     myMPCWeights = Float64MultiArray()
     myMPCWeights.data = np.array([1, 100, 5, 1000000000, 0.5, 10])
-    myMPCWeights.data = np.array([100, 5, 5, 0.5, 10, 1000000000])
+    #myMPCWeights.data = np.array([100, 5, 5, 0.5, 10, 1000000000])
     goals = []
     goalData1 = Float64MultiArray()
     goalData1.data = np.array([3, -3, -1.57, 1, 0, 0, -1, 0, 1, 0])
