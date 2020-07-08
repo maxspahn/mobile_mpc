@@ -1,4 +1,4 @@
-#include "mpc_solver.h"
+#include "mpc_acado_solver.h"
 
 ACADOvariables acadoVariables;
 ACADOworkspace acadoWorkspace;

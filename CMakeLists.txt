@@ -186,8 +186,8 @@ target_link_libraries(mpc_problem
   custom_acado
   ${catkin_LIBRARIES}
 )
-add_library(mpc_solver src/mpc_solver.cpp)
-target_link_libraries(mpc_solver
+add_library(mpc_acado_solver src/mpc_acado_solver.cpp)
+target_link_libraries(mpc_acado_solver
   custom_acado
   mpc_problem
   ${catkin_LIBRARIES}
@@ -197,7 +197,7 @@ add_library(mpc_interface src/mpc_interface.cpp)
 target_link_libraries(mpc_interface
   custom_acado
   mpc_problem
-  mpc_solver
+  mpc_acado_solver
   ${catkin_LIBRARIES}
 )
 
@@ -206,7 +206,7 @@ target_link_libraries(mpc_node_pro
   custom_acado
   mpc_interface
   mpc_problem
-  mpc_solver
+  mpc_acado_solver
   ${catkin_LIBRARIES}
 )
 
