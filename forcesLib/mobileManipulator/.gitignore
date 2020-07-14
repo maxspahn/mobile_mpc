@@ -6,3 +6,5 @@ __pycache__
 mm_MPC_mex_compiler_warnings.txt
 mm_MPC/
 mm_MPC.mexa64
+mm_MPC.m
+mm_MPC_py.py
