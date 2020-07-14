@@ -81,7 +81,7 @@ function spheres = computeSpheres(q, x)
     s_3 = [T3_s(1:3, 4)', l3(3)];
 
     %% link 4
-    l4 = [1.2 * 0.0826/2 0 1,2 * 0.384/2];
+    l4 = [1.2 * 0.0826/2 0 1.2 * 0.384/2];
     T4_s = T_base * T0 * T1 * T2 * T3 * T4 * makeTF('translate', l3);
     s_4 = [T4_s(1:3, 4)', l4(3)];
 

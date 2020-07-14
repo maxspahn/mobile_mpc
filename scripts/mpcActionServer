@@ -79,6 +79,9 @@ class MPCAction(object):
         self.maxError = goal.maxError.data
         self.weights = np.array(goal.mpcWeights.data)
 
+        # start timer
+        startTime = rospy.get_rostime()
+
         error = 10000000
         while True:
             oldError = error
@@ -100,7 +103,10 @@ class MPCAction(object):
                 self._as.set_preempted()
                 sucess = False
                 break
-        print("Finishing Execution")
+        # Stop timer
+        endTime = rospy.get_rostime()
+        deltaT = endTime - startTime
+        rospy.loginfo("Finishing Execution after %i sec %i ms", deltaT.secs, deltaT.nsecs)
         self.publishVelocities(np.zeros(2), np.zeros(7))
 
         # start executing the action
@@ -141,7 +147,7 @@ class MPCAction(object):
         # q, x, o, slack, u, qdot,
         # self.weights = np.array([10.0, 1000.0, 1.0, 100000000.0, 1.0, 100.0])
         self.weights = np.array([1, 100, 5, 1000000000, 0.5, 10])
-        self.safetyMargin = np.array([0.0])
+        self.safetyMargin = np.array([0.02])
         nbObstacles = 5
         nbPlanes = 8
         self.obstacles = np.ones(nbObstacles * 4) * -100
@@ -225,9 +231,9 @@ class MPCAction(object):
         self.PARAMS["x0"] = self.x0
         self.PARAMS["all_parameters"] = params
         [output, exitFlag, info] = solve_MPC_mm.solve_MPC_mm(self.PARAMS)
-        rospy.loginfo("Iterations : %i", info.it)
-        rospy.loginfo("Exitflag %i", exitFlag)
-        [output, exitFlag, info] = solve_MPC_mm.solve_MPC_mm(self.PARAMS)
+        if info.it <= 1:
+            exitflag = -111
+        rospy.loginfo("Exitflag : %d", exitFlag)
         return [output, exitFlag]
 
     def publishVelocities(self, u_wheels, u_arm):
@@ -256,7 +262,11 @@ class MPCAction(object):
 
         self.x0 = np.array(newx0)
         self.rate.sleep()
-        self.publishVelocities(u_opt_wheels, u_opt_arm)
+        if exitFlag == -111:
+            rospy.loginfo("MPC aborted...publish zero velocity")
+            self.publishVelocities(np.zeros(2), np.zeros(7))
+        else:
+            self.publishVelocities(u_opt_wheels, u_opt_arm)
         return exitFlag
 
 
