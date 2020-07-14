@@ -1,0 +1,8 @@
+*.forces
+__pycache__
+@*
+*.m~
+*.pyc
+diffDrive_MPC_mex_compiler_warnings.txt
+diffDrive_MPC/
+diffDrive_MPC.mexa64
