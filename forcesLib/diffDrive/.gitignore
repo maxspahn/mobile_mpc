@@ -6,3 +6,5 @@ __pycache__
 diffDrive_MPC_mex_compiler_warnings.txt
 diffDrive_MPC/
 diffDrive_MPC.mexa64
+diffDrive_MPC.m
+diffDrive_MPC_py.py
