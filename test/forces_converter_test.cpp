@@ -87,6 +87,7 @@ TEST_F(ForcesConverterTest, testVariablesSetXinit)
   EXPECT_THAT(mp.xinit[0], DoubleNear(1.2, EPSILON));
   EXPECT_THAT(mp.xinit[1], DoubleNear(-0.5, EPSILON));
   EXPECT_THAT(mp.xinit[2], DoubleNear(0.433, EPSILON));
+  EXPECT_THAT(mp.xinit[15], DoubleNear(0.0, EPSILON));
 }
 
 TEST_F(ForcesConverterTest, testVariablesSetX0)

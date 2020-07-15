@@ -12,7 +12,7 @@ class MpcForcesSolverTest : public ::testing::Test {
       mpcProblem_ = MpcProblem(0.5, 0.3);
       goalArray ga = goalArray({0, -8.0, 1.5708, 1.0, 1.0, -1.5, -1.5, 0.5, 1.0, 0.2});
       curStateArray csa = curStateArray({-4.0, -4.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.5, 1.5, 0.0});
-      weightArray wa = weightArray({1.0, 100.0, 0.0, 1e+9, 0, 0});
+      weightArray wa = weightArray({1.0, 10.0, 0.0, 100.0, 0, 0});
       obstacleArray oa = obstacleArray({-1.5, -6, 0, 1});
       mpcProblem_.goal(ga);
       mpcProblem_.curState(csa);
@@ -35,6 +35,8 @@ TEST_F(MpcForcesSolverTest, testSettingsXinit)
   EXPECT_THAT(fp.xinit[6], DoubleNear(-1.0, EPSILON));
   EXPECT_THAT(fp.xinit[7], DoubleNear(0.5, EPSILON));
   EXPECT_THAT(fp.xinit[8], DoubleNear(1.5, EPSILON));
+  // U checking
+  EXPECT_THAT(fp.xinit[15], DoubleNear(0.0, EPSILON));
 }
 
 TEST_F(MpcForcesSolverTest, testSettingsX0)
@@ -58,14 +60,16 @@ TEST_F(MpcForcesSolverTest, testSettingsParams)
   EXPECT_THAT(fp.all_parameters[20], DoubleNear(-1.5, EPSILON));
   EXPECT_THAT(fp.all_parameters[234], DoubleNear(0.0, EPSILON));
   EXPECT_THAT(fp.all_parameters[133], DoubleNear(1.0, EPSILON));
-  EXPECT_THAT(fp.all_parameters[112], DoubleNear(1.0e+9, EPSILON));
+  EXPECT_THAT(fp.all_parameters[112], DoubleNear(100.0, EPSILON));
 }
 
-TEST_F(MpcForcesSolverTest, testIterationStep)
+TEST_F(MpcForcesSolverTest, testIterationStepOutput)
 {
   mpcSolver_.solveMPC();
   curUArray u_opt = mpcSolver_.getOptimalControl();
   EXPECT_THAT(u_opt[0], DoubleNear(4.0, EPSILON));
+  EXPECT_THAT(u_opt[1], DoubleNear(-1.65433, EPSILON));
+  EXPECT_THAT(u_opt[2], DoubleNear(1.74, EPSILON));
 }
 
 

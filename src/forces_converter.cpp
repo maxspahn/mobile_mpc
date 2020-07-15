@@ -34,8 +34,11 @@ void ForcesConverter::setupParams(MpcProblem mp)
 void ForcesConverter::setForcesVariables(MpcProblem mp)
 {
   unsigned int index;
-  for (int i = 0; i < (NX + NS); ++i) {
-    forces_params_.xinit[i] = mp.curState(i);
+  for (int sv = 0; sv < (NX + NS); ++sv) {
+    forces_params_.xinit[sv] = mp.curState(sv);
+  }
+  for (int uv = 0; uv < NUF; ++uv) {
+    forces_params_.xinit[NX + NS + uv] = mp.curU(uv);
   }
   for (int timeStep = 0; timeStep < TH; ++timeStep) {
     for (int sv = 0; sv < (NX + NS); ++sv) {
