@@ -1,32 +1,41 @@
 #include "mpc_acado_solver.h"
 
-MpcSolver::MpcSolver() : maximalSteps_(100), solverTolerance_(0.001) {}
-  
-MpcSolver::~MpcSolver() {}
+ACADOworkspace acadoWorkspace;
+ACADOvariables acadoVariables;
 
-std::array<double, 10> MpcSolver::solveMPC(MpcProblem& mp){
-  int i;
+MpcAcadoSolver::MpcAcadoSolver() : 
+  maximalSteps_(100),
+  solverTolerance_(0.001),
+  converter_()
+{}
+  
+void MpcAcadoSolver::solveMPC(MpcProblem& mp){
   acado_timer t;
   acado_initializeSolver();
-  mp.setAcadoVariables(acadoVariables);
+  converter_.setupParams(mp);
+  converter_.setAcadoVariables(mp);
+  acadoWorkspace = converter_.acadoWorkspace();
+  acadoVariables = converter_.acadoVariables();
 	acado_preparationStep();
   acado_feedbackStep();
   int iter = 0;
+  // Currently it is not working
   while (acado_getKKT() > solverTolerance_ && iter < maximalSteps_)
   {
     acado_feedbackStep();
 	  acado_preparationStep();
     iter++;
-    //printf("Iteration step %d, KKT : %1.5f\n", iter, acado_getKKT());
   }
-  std::array<double, 10> optCommands;
-  for (int i = 0; i < 10; ++i) {
-    optCommands[i] = acadoVariables.u[i+10];
+  acadoWorkspace_ = acadoWorkspace;
+  acadoVariables_ = acadoVariables;
+}
+
+curUArray MpcAcadoSolver::getOptimalControl()
+{
+  curUArray optCommands;
+  for (int i = 0; i < NU; ++i) {
+    optCommands[i] = acadoVariables_.u[i+10];
   }
-  mp.slackVel(optCommands[9+10]);
-  mp.slackVar(acadoVariables.x[10+11]);
-  printf("Slack Variable : %1.5f\n", mp.slackVar());
-  printf("Slack Velocity: %1.5f\n", mp.slackVel());
   return optCommands;
 }
   

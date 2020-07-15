@@ -1,8 +1,8 @@
 #include "mpc_forces_solver.h"
 
-mm_MPC_params forces_params;
-mm_MPC_output forces_output;
-mm_MPC_info forces_info;
+//mm_MPC_params forces_params;
+//mm_MPC_output forces_output;
+//mm_MPC_info forces_info;
 
 extern "C" {
 extern void mm_MPC_casadi2forces( mm_MPC_float *x,        /* primal vars                                         */
@@ -25,22 +25,29 @@ MpcForcesSolver::MpcForcesSolver() {}
   
 MpcForcesSolver::~MpcForcesSolver() {}
 
-std::array<double, 10> MpcForcesSolver::solveMPC(MpcProblem& mp){
-  int i;
-  mp.setForcesVariables(forces_params);
-  printf("at exit : %1.5f\n", forces_params.all_parameters[0]);
-  int exitFlag = mm_MPC_solve(&forces_params, &forces_output, &forces_info, stdout, extfunc_eval);
-  std::array<double, 10> optCommands;
+void MpcForcesSolver::setupMPC(MpcProblem& mp){
+  converter_.setupParams(mp);
+  converter_.setForcesVariables(mp);
+}
+
+void MpcForcesSolver::solveMPC(){
+  mm_MPC_params forces_params = converter_.forces_params();
+  int exitFlag = mm_MPC_solve(&forces_params, &forces_output_, &forces_info_, stdout, extfunc_eval);
   printf("ExitFlag : %d\n", exitFlag);
-  for (int i = 0; i < 10; ++i) {
-    optCommands[i] = forces_output.x02[i+10];
+}
+
+mm_MPC_params MpcForcesSolver::forces_params()
+{
+  return converter_.forces_params();
+}
+
+curUArray MpcForcesSolver::getOptimalControl()
+{
+  curUArray optCommands;
+  for (int i = 0; i < NU; ++i) {
+    optCommands[i] = forces_output_.x02[i+NX+NS];
   }
-  /*
-  mp.slackVel(optCommands[9+10]);
-  mp.slackVar(acadoVariables.x[10+11]);
-  printf("Slack Variable : %1.5f\n", mp.slackVar());
-  printf("Slack Velocity: %1.5f\n", mp.slackVel());
-  */
   return optCommands;
 }
+  
   

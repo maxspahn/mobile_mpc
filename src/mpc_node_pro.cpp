@@ -1,6 +1,4 @@
 #include <mpc_interface.h>
-#include "acado_common.h"
-#include "acado_auxiliary_functions.h"
 
 int main(int argc, char **argv)
 {

@@ -1,22 +1,21 @@
-#ifndef MPC_SOLVER_H
-#define MPC_SOLVER_H
+#ifndef MPC_ACODO_SOLVER_H
+#define MPC_ACODO_SOLVER_H
 
-#include "mpc_problem.h"
-#include "acado_common.h"
-#include "acado_auxiliary_functions.h"
+#include "acado_converter.h"
 
-class MpcSolver
+class MpcAcadoSolver
 {
 private:
   int maximalSteps_;
   double solverTolerance_;
-  ACADOvariables acadoVariables_;
+  AcadoConverter converter_;
   ACADOworkspace acadoWorkspace_;
+  ACADOvariables acadoVariables_;
 
 public:
-  MpcSolver();
-  ~MpcSolver();
-  std::array<double, 10> solveMPC(MpcProblem&);
+  MpcAcadoSolver();
+  void solveMPC(MpcProblem&);
+  curUArray getOptimalControl();
 };
 
-#endif /* MPC_SOLVER_H */ 
+#endif /* MPC_ACODO_SOLVER_H */ 
