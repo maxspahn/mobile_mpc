@@ -188,8 +188,8 @@ add_library(mpc_lib
   src/mpc_problem.cpp
   src/mpc_acado_solver.cpp
   src/mpc_forces_solver.cpp
+  src/mpc_interface.cpp
 )
-##src/mpc_interface.cpp
 target_link_libraries(mpc_lib
   custom_acado
   mpc_acado
@@ -197,11 +197,11 @@ target_link_libraries(mpc_lib
   ${catkin_LIBRARIES}
 )
 
-##add_executable(mpc_node_pro src/mpc_node_pro.cpp)
-##target_link_libraries(mpc_node_pro
-##  mpc_lib
-##  ${catkin_LIBRARIES}
-##)
+add_executable(mpc_node_pro src/mpc_node_pro.cpp)
+target_link_libraries(mpc_node_pro
+  mpc_lib
+  ${catkin_LIBRARIES}
+)
 
 ##add_executable(mpc_server
 ##  src/mpc_action_server.cpp

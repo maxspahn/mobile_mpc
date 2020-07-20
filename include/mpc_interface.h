@@ -9,8 +9,6 @@
 #include "tf/transform_listener.h"
 
 #include "mpc_forces_solver.h"
-#include "mpc_acado_solver.h"
-#include "mpc_problem.h"
 
 #include <cmath>
 

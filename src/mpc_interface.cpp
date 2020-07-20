@@ -118,7 +118,9 @@ curUArray MpcInterface::solve()
   getState();
   mpcProblem_.curU(curU_);
   mpcProblem_.curState(curState_);
-  curUArray optCommands = mpcSolver_.solveMPC(mpcProblem_);
+  mpcSolver_.setupMPC(mpcProblem_);
+  mpcSolver_.solveMPC();
+  curUArray optCommands = mpcSolver_.getOptimalControl();
   //ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
   curU_[0] = optCommands[0];
   curU_[1] = optCommands[1];
