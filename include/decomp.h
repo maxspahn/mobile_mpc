@@ -26,7 +26,10 @@ private:
   ros::Subscriber sCloud_;
   ros::Publisher poly_pub_;
   ros::Publisher es_pub_;
+  ros::Publisher cloud_pub_;
   tf::TransformListener *tfListenerPtr_;
+  ros::Rate r_;
+  sensor_msgs::PointCloud cloud_;
   vec_Vec3f obs_;
 
 public:
