@@ -16,6 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   genmsg
 )
+find_package(Eigen3 REQUIRED)
+find_package(decomp_util REQUIRED)
+find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -122,8 +125,12 @@ include_directories(
   acado/generated_mpc
   acado/generated_mpc/qpoases/INCLUDE
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${DECOMP_UTIL_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
-
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/mobile_mpc.cpp
@@ -226,6 +233,14 @@ target_link_libraries(mpc_client
   ${catkin_LIBRARIES}
 )
 
+MESSAGE("INCLUDE_UTIL_INCLUDE_DIRS")
+MESSAGE(${DECOMP_UTIL_INCLUDE_DIRS})
+add_executable(decomp_test
+  src/decomp.cpp
+)
+target_link_libraries(decomp_test
+  ${catkin_LIBRARIES}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
