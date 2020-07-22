@@ -1,24 +1,35 @@
 function ineq = obstacleAvoidanceSimple(z, p)
-    x = z(1:3);
-    q = z(4:10);
-    slack = z(11);
-    nbPlanes = 8;
-    dimPlane = 9;
-    safetyMargin = p(20);
 
 
+x = z(1:3);
+q = z(4:10);
+slack = z(11);
+nbPlanes = 0;
+nbInfPlanes = 3;
+nbObstacles = 0;
+nbSpheres = 6;
+dimPlane = 9;
+dimInfPlane = 4;
+dimObstacle = 4;
+safetyMargin = p(20);
+
+offsetObstacles = 21;
+indicesPlanes = offsetObstacles + [0, nbPlanes * dimPlane - 1];
+indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanes * dimInfPlane - 1];
+indicesObstacles = indicesInfPlanes(2) + 1 + [0, nbObstacles * dimObstacle - 1];
+
+planes = p(indicesPlanes(1): indicesPlanes(2));
+infPlanes = p(indicesInfPlanes(1): indicesInfPlanes(2));
+obstacles = p(indicesObstacles(1): indicesObstacles(2));
+    
     %spheres = p(20:23);
     spheres = computeSpheres(q, x)';
 
-    objects = p(20 + nbPlanes * dimPlane + 1:end);
-    nbObstacles = size(objects, 1)/4;
-    nbSpheres = size(spheres, 1)/4;
-    planes = p(21: 20 + nbPlanes * dimPlane);
 %     
 %     nbSpheres = size(spheres, 1);
     ineq = [];
     for i=1:nbObstacles
-        o = objects(4 * (i - 1) + 1: 4 * (i - 1) + 4);
+        o = obstacles(4 * (i - 1) + 1: 4 * (i - 1) + 4);
         for j = 1:nbSpheres
             s = spheres(4 * (j - 1) + 1: 4 * (j - 1) + 4);
             dist = point2point(o(1:3), s(1:3));
@@ -32,6 +43,15 @@ function ineq = obstacleAvoidanceSimple(z, p)
         for j = 1:nbSpheres
             s = spheres(4 * (j - 1) + 1: 4 * (j - 1) + 4);
             dist = point2line(s(1:3), plane);
+            ineq = [ineq; dist - s(4) - safetyMargin + slack];
+        end
+    end
+    
+    for i=1:nbInfPlanes
+        infPlane = infPlanes(dimInfPlane * (i - 1) + 1:dimInfPlane * (i -1 ) + dimInfPlane);
+        for j = 1:nbSpheres
+            s = spheres(4 * (j - 1) + 1:4 * (j -1) + 4);
+            dist = point2infplane(s(1:3), infPlane);
             ineq = [ineq; dist - s(4) - safetyMargin + slack];
         end
     end

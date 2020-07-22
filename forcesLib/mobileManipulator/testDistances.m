@@ -8,6 +8,8 @@ plane2 = [1, 1, 0, 5, 1, 0, 3, 3, 0]';
 plane3 = [1, 3, 0, 4, 8, 0, 6, 3, 0]';
 plane4 = [-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 0.7]';
 plane5 = [-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 0.7]';
+planeInf = [0, 0, 1, 1]';
+planeInf2 = [-0.5, 1, 0, -1]';
 triangle = [1, 1, 0, 5, 1, 0, 1, 4, 0]';
 
 %% pointOnLine
@@ -115,6 +117,28 @@ assert(abs(d20 - 5.5) < EPSILON);
 p21 = [2.5, 3.7, 1.0]';
 d21 = point2plane(p21, plane5);
 assert(abs(d21 - sqrt((2 + 2.5)^2 + (3.7 + 5.5)^2 + 0.3^2)) < EPSILON);
+
+%% point2infPlane
+p22 = [5, 4.5, 3]';
+d22 = point2infplane(p22, planeInf);
+assert(abs(d22 - 2) < EPSILON);
+
+%% point2infPlaneNegative
+p23 = [5, 4.5, -3]';
+d23 = point2infplane(p23, planeInf);
+assert(abs(d23 + 0) < EPSILON);
+
+%% point2infPlane2Negative
+p24 = [1, 2, 0]';
+d24 = point2infplane(p24, planeInf2);
+assert(abs(d24 - sqrt(5)) < EPSILON);
+
+%% point2infPlane2
+p25 = [3, -2, 0]';
+d25 = point2infplane(p25, planeInf2);
+assert(abs(d25 - 0) < EPSILON);
+
+
 
 
 

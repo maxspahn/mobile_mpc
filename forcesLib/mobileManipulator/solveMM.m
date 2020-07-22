@@ -11,7 +11,8 @@ clc;
 
 fig2 = figure(2);
 set(fig2, 'Position', get(0, 'Screensize'))
-ax2 = axes('Parent', fig2, 'xlim', [-7, 7], 'ylim', [-10, 0]);
+ax2 = axes('Parent', fig2, 'xlim', [-100, 100]);
+axis equal
 hold(ax2, 'on');
 
 
@@ -19,11 +20,11 @@ hold(ax2, 'on');
 H = 20;
 
 dt = 0.5;
-base_pos = [-4; -4; 0];
+base_pos = [-3; -2; 0];
 arm_pos = [0; 0; 0; -1; 0.5; 1.5; 0];
 u_start = zeros(9, 1);
 start = [base_pos; arm_pos];
-goal_base_pos = [0; -8; pi/2];
+goal_base_pos = [6; 4; pi/2];
 goal_arm_pos = [1; 1; -1.5; -1.5; 0.5; 1; 0.2];
 
 goal = [goal_base_pos; goal_arm_pos];
@@ -45,6 +46,10 @@ planes(37:45) = [-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 2]';
 planes(46:54) = [-2, -7.5, 0, 0, -7.5, 0, -2, -7.5, 2]';
 planes(55:63) = [-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 2]';
 planes(64:72) = [0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 2]';
+infPlanes = zeros(3 * 4, 0);
+infPlanes(1:4) = [-1, 1, 0, -6]';
+infPlanes(5:8) = [1, 0, 0, -4]';
+infPlanes(9:12) = [0.5, -1, 0, -6]';
 
 %planes = repmat(planes(1:36), 2, 1);
 %planes = repmat(planes(55:63), 8, 1);
@@ -57,15 +62,20 @@ planes(64:72) = [0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 2]';
 % plane3 = [1, 0, 0, 0, 2, 0, 1]';
 % plane4 = [0, 1, 0, 5.5, 3, 0, 5.5]';
 %planes = [plane1; plane2; plane3; plane4];
-for i=1:8
+for i=1:0
     [xp, yp, zp] = planeEquation(planes(9 * (i -1) + 1: 9 * (i -1) + 9));
     plot(ax2, xp, yp);
+end
+for i = 1:3
+    [xp, yp, zp, np] = infPlaneEquation(infPlanes(4 * (i - 1) + 1: 4 * (i - 1) + 4));
+    plot(ax2, xp, yp);
+    plot(ax2, np(1,:), np(2,:), 'bx');
 end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
 weights = [1, 100, 0, 1000000000, 0, 0];
-safetyMargin = 0.3;
+safetyMargin = 0.0;
 for i=1:0
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end
@@ -80,6 +90,7 @@ plot(goal_base_pos(1), goal_base_pos(2), 'rx');
 r = 0.1;
 L = 0.9;
 params = repmat([dt, r, L, goal', weights, safetyMargin, planes', obstacles'], 1, H)';
+params = repmat([dt, r, L, goal', weights, safetyMargin, infPlanes], 1, H)';
 problem.all_parameters = params;
 
 curState = start;
@@ -88,9 +99,11 @@ error = 10000;
 t = 0;
 while 1
     [output, exitflag, info] = mm_MPC(problem);
-    disp(info.res_ineq);
+    %disp(info.res_ineq);
     curState = output.x02(1:10);
     curU = output.x01(12:13);
+    slack = output.x02(11);
+    disp(slack);
     problem.xinit = output.x02;
     problem.x0 = [output.x01;
         output.x02;...
@@ -141,6 +154,22 @@ function [x, y, z] = planeEquation(plane)
     x = values(:, :, 1);
     y = values(:, :, 2);
     z = values(:, :, 3);
+end
+
+function [x, y, z, n] = infPlaneEquation(infPlane)
+    a = infPlane(1:3);
+    d = infPlane(4);
+    if (a(2) == 0)
+        y = -10:0.1:10;
+        x = (d - a(2) * y) / a(1);
+    else
+        x = -10:0.1:10;
+        y = (d - a(1) * x )/ a(2);
+    end
+    z = zeros(size(x));
+    n0 = [x(50), y(50), z(50)]';
+    n1 = n0 + a';
+    n = [n0, n1];
 end
 
 
