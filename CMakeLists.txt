@@ -203,13 +203,13 @@ target_link_libraries(mpc_node_pro
   ${catkin_LIBRARIES}
 )
 
-##add_executable(mpc_server
-##  src/mpc_action_server.cpp
-##)
-##target_link_libraries(mpc_server
-##  mpc_lib
-##  ${catkin_LIBRARIES}
-##)
+add_executable(mpc_server
+  src/mpc_action_server.cpp
+)
+target_link_libraries(mpc_server
+  mpc_lib
+  ${catkin_LIBRARIES}
+)
 
 ##add_executable(mpc_client
 ##  src/mpc_action_client.cpp

@@ -1,7 +1,6 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  rate_(2),
   mpcProblem_(),
   mpcSolver_(),
   name_(name)
@@ -18,20 +17,6 @@ MpcInterface::MpcInterface(std::string name) :
 MpcInterface::~MpcInterface()
 {
   ROS_INFO("Calling Destructor of mpc");
-}
-
-void MpcInterface::runNode()
-{
-  rate_.sleep();
-  while (computeError() > 0.1)
-  //for (int i = 0; i < 30000; ++i)
-  {
-    //ROS_INFO("Attempting to get state");
-    singleMPCStep();
-    //ROS_INFO("Spinning cycle %d", i);
-    ros::spinOnce();
-  }
-  publishZeroVelocities();
 }
 
 void MpcInterface::problemSetup()
@@ -96,13 +81,6 @@ void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeight
   errorWeights_ = errorWeights;
 }
   
-
-void MpcInterface::singleMPCStep()
-{
-  curUArray u_opt = solve();
-  rate_.sleep();
-  publishVelocities(u_opt);
-}
 
 void MpcInterface::printState()
 {

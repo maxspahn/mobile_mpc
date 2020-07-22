@@ -9,9 +9,11 @@
 #define NX          10  /* Number of differential state variables.  */
 #define NS          1   /* Number of slack variables. */
 #define NU          10  /* Number of control inputs. */
-#define NO          1   /* Number of obstacles. */
+#define NUF         9   /* Number of control inputs for forces. */
+#define NO          5   /* Number of obstacles. */
 #define SO          4   /* Size of obstacle data. */
-#define NP          22  /* Number of online data values. */
+#define NP          38  /* Number of online data values. */
+#define NPF         40  /* Number of forces parameters. */
 #define N           21  /* Number of intervals in the horizon. */
 #define NW          6   /* Number of weights. */
 #define NC          2   /* Number of config parameters. */

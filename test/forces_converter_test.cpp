@@ -27,7 +27,7 @@ TEST_F(ForcesConverterTest, testParamSetup)
 {
   converter_.setupParams(mpcProblem_);
   forcesParamArray p = converter_.params();
-  EXPECT_EQ(p.size(), 24);
+  EXPECT_EQ(p.size(), NPF);
   EXPECT_THAT(p[0], DoubleNear(0.2, EPSILON));
   EXPECT_THAT(p[1], DoubleNear(0.08, EPSILON));
   EXPECT_THAT(p[2], DoubleNear(0.544, EPSILON));

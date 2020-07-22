@@ -4,9 +4,6 @@
 #include "mpc_problem.h"
 #include "mm_MPC.h"
 
-#define NPF 24 /* 1 + NC + NX + NW + 1 + NO * 4 */
-#define NUF 9  /* NU - 1 */
-
 typedef std::array<double, NPF> forcesParamArray;
 
 class ForcesConverter

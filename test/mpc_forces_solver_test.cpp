@@ -58,9 +58,7 @@ TEST_F(MpcForcesSolverTest, testSettingsParams)
 {
   mm_MPC_params fp = mpcSolver_.forces_params();
   EXPECT_THAT(fp.all_parameters[20], DoubleNear(-1.5, EPSILON));
-  EXPECT_THAT(fp.all_parameters[234], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(fp.all_parameters[133], DoubleNear(1.0, EPSILON));
-  EXPECT_THAT(fp.all_parameters[112], DoubleNear(100.0, EPSILON));
+  EXPECT_THAT(fp.all_parameters[NPF + 13 + 3], DoubleNear(100.0, EPSILON));
 }
 
 TEST_F(MpcForcesSolverTest, testIterationStepOutput)

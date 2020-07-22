@@ -47,7 +47,7 @@ rad2deg = @(rad) rad/pi*180; % convert radians into degrees
 
 %% Problem dimensions
 model.N = 20;                                       % horizon length
-nbObstacles = 1;
+nbObstacles = 5;
 nbSpheres = 6;                                          % base + 5 for the arm
 nbSelfCollision = 0;
 nbPlanes = 0;

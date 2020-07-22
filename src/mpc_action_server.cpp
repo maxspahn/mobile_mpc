@@ -3,11 +3,10 @@
 MPCAction::MPCAction(std::string name) :
   as_(nh_, name, boost::bind(&MPCAction::executeCB, this, _1), false),
   action_name_(name),
-  mpcInterface_(name)
+  mpcInterface_(name),
+  rate_(2)
 {
   as_.start();
-  obstacleArray obstacles = {-1.5, 0.0, 0.0, 1.0};
-  mpcInterface_.setObstacles(obstacles);
 }
 
 MPCAction::~MPCAction()
@@ -56,7 +55,9 @@ void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
 
   while (mpcInterface_.computeError() > maxError_)
   {
-    mpcInterface_.singleMPCStep();
+    curUArray u_opt = mpcInterface_.solve();
+    rate_.sleep();
+    mpcInterface_.publishVelocities(u_opt);
     if (as_.isPreemptRequested() || !ros::ok())
     {
       ROS_INFO("%s: Preempted", action_name_.c_str());

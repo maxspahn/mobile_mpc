@@ -25,14 +25,14 @@ class AcadoConverterTest : public ::testing::Test {
 
 TEST_F(AcadoConverterTest, testParamLength)
 {
-  EXPECT_EQ(converter_.np(), 22);
+  EXPECT_EQ(converter_.np(), NP);
 }
 
 TEST_F(AcadoConverterTest, testParamSetup)
 {
   converter_.setupParams(mpcProblem_);
   paramArray p = converter_.params();
-  EXPECT_EQ(p.size(), 22);
+  EXPECT_EQ(p.size(), NP);
   EXPECT_THAT(p[10], DoubleNear(0.08, EPSILON));
   EXPECT_THAT(p[0], DoubleNear(4.2, EPSILON));
   EXPECT_THAT(p[5], DoubleNear(1.5, EPSILON));

@@ -5,8 +5,6 @@
 #include "acado_common.h"
 #include "acado_auxiliary_functions.h"
 
-#define NP 22 /* NX + NC + NW + NO * 4 */
-
 typedef std::array<double, NP> paramArray;
 
 class AcadoConverter

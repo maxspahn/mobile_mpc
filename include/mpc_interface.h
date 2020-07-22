@@ -19,12 +19,10 @@ class MpcInterface
 public:
   MpcInterface (std::string);
   virtual ~MpcInterface ();
-  void runNode();
   void problemSetup();
   void publishVelocities(curUArray vel);
   void publishZeroVelocities();
   void jointState_cb(const sensor_msgs::JointState::ConstPtr&);
-  void singleMPCStep();
   void printState();
   void setGoal(goalArray);
   void setObstacles(obstacleArray);
@@ -38,7 +36,6 @@ private:
   MpcForcesSolver mpcSolver_;
   std::string name_;
   ros::NodeHandle nh_;
-  ros::Rate rate_;
   ros::Publisher pubRightWheel_;
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;

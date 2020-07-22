@@ -13,6 +13,7 @@ class MPCAction
 protected:
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<mobile_mpc::mpcAction> as_;
+  ros::Rate rate_;
   std::string action_name_;
   mobile_mpc::mpcFeedback feedback_;
   mobile_mpc::mpcResult result_;
