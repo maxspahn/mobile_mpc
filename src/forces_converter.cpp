@@ -6,7 +6,8 @@ ForcesConverter::ForcesConverter()
   configRobotOffset_ = 1;
   goalIndexOffset_ = 3;
   weightsIndexOffset_ = 13;
-  obstaclesIndexOffset_ = 20;
+  planesIndexOffset_ = 20;
+  obstaclesIndexOffset_ = 20 + NPLANES * SPLANES;
   safetyMarginIndexOffset_ = 19;
 }
 
@@ -19,6 +20,9 @@ void ForcesConverter::setupParams(MpcProblem mp)
   for (int gI = 0; gI < NX; ++gI)
   {
     params_[gI + goalIndexOffset_] = mp.goal(gI);
+  }
+  for (int pI = 0; pI < (NPLANES * SPLANES); ++pI) {
+    params_[pI + planesIndexOffset_] = mp.plane(pI);
   }
   for (int oI = 0; oI < (NO * SO); ++oI) {
     params_[oI + obstaclesIndexOffset_] = mp.obstacle(oI);
@@ -50,7 +54,7 @@ void ForcesConverter::setForcesVariables(MpcProblem mp)
       forces_params_.x0[index] = mp.curU(uv);
     }
     for (int p = 0; p < NPF; ++p) {
-      index = (timeStep * NPF) + p;
+      index = (NPF * timeStep) + p;
       forces_params_.all_parameters[index] = params_[p];
     }
   }

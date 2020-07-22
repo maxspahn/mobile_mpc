@@ -129,6 +129,21 @@ double MpcProblem::obstacle(int oI)
   return obstacles_[oI];
 }
 
+void MpcProblem::planes(planeArray o)
+{
+  planes_ = o;
+}
+
+planeArray MpcProblem::planes()
+{
+  return planes_;
+}
+
+double MpcProblem::plane(int oI)
+{
+  return planes_[oI];
+}
+
 void MpcProblem::configRobot(configArray c)
 {
   configRobot_ = c;

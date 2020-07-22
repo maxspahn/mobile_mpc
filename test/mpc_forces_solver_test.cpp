@@ -13,11 +13,24 @@ class MpcForcesSolverTest : public ::testing::Test {
       goalArray ga = goalArray({0, -8.0, 1.5708, 1.0, 1.0, -1.5, -1.5, 0.5, 1.0, 0.2});
       curStateArray csa = curStateArray({-4.0, -4.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.5, 1.5, 0.0});
       weightArray wa = weightArray({1.0, 10.0, 0.0, 100.0, 0, 0});
-      obstacleArray oa = obstacleArray({-1.5, -6, 0, 1});
+      obstacleArray oa = obstacleArray({-1.5, -6, 0, 1, 
+                                        -1.5, -6, 0, 1,
+                                        -1.5, -6, 0, 1,
+                                        -1.5, -6, 0, 1
+                                        });
+      planeArray pa = planeArray({-2.5,   -2, 0, 2.5,   -2, 0, -2.5,   -2,   2, 
+                                  -2.5,   -3, 0, 2.5,   -3, 0, -2.5,   -3,   2, 
+                                     4,   -2, 0,   4,   -7, 0,  4.0, -2.0, 2.0, 
+                                     5,   -2, 0,   5,   -7, 0,  5.0, -2.0, 2.0, 
+                                    -2, -5.5, 0,   0, -5.5, 0,   -2, -5.5, 0.7, 
+                                    -2, -7.5, 0,   0, -7.5, 0,   -2, -7.5, 0.7, 
+                                    -2, -5.5, 0,  -2, -7.5, 0,   -2, -5.5, 0.7, 
+                                     0, -5.5, 0,   0, -7.5, 0,    0, -5.5, 0.7});
       mpcProblem_.goal(ga);
       mpcProblem_.curState(csa);
       mpcProblem_.weights(wa);
       mpcProblem_.obstacles(oa);
+      mpcProblem_.planes(pa);
       mpcSolver_ = MpcForcesSolver(); 
       mpcSolver_.setupMPC(mpcProblem_);
     }
@@ -57,7 +70,11 @@ TEST_F(MpcForcesSolverTest, testSettingsX0)
 TEST_F(MpcForcesSolverTest, testSettingsParams)
 {
   mm_MPC_params fp = mpcSolver_.forces_params();
-  EXPECT_THAT(fp.all_parameters[20], DoubleNear(-1.5, EPSILON));
+  // Safety Margin
+  EXPECT_THAT(fp.all_parameters[19], DoubleNear( 0.3, EPSILON));
+  // Planes
+  EXPECT_THAT(fp.all_parameters[20], DoubleNear(-2.5, EPSILON));
+  // weights[3]
   EXPECT_THAT(fp.all_parameters[NPF + 13 + 3], DoubleNear(100.0, EPSILON));
 }
 

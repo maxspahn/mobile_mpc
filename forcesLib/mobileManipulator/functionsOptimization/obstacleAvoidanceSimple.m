@@ -2,7 +2,7 @@ function ineq = obstacleAvoidanceSimple(z, p)
     x = z(1:3);
     q = z(4:10);
     slack = z(11);
-    nbPlanes = 0;
+    nbPlanes = 8;
     dimPlane = 9;
     safetyMargin = p(20);
 
