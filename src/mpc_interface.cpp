@@ -1,7 +1,7 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  mpcProblem_(),
+  mpcProblem_(0.25, 0.02),
   mpcSolver_(),
   name_(name)
 {
@@ -72,6 +72,11 @@ void MpcInterface::setGoal(goalArray goal)
 void MpcInterface::setObstacles(obstacleArray obstacles)
 {
   mpcProblem_.obstacles(obstacles);
+}
+
+void MpcInterface::setPlanes(planeArray planes)
+{
+  mpcProblem_.planes(planes);
 }
 
 void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeightArray errorWeights)

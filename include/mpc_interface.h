@@ -26,6 +26,7 @@ public:
   void printState();
   void setGoal(goalArray);
   void setObstacles(obstacleArray);
+  void setPlanes(planeArray);
   void parseProblem(goalArray, weightArray, errorWeightArray);
   curUArray solve();
   void getState();

@@ -28,6 +28,7 @@ public:
   ~MPCAction();
   void executeCB(const mobile_mpc::mpcGoalConstPtr&);
   void parseProblem(const mobile_mpc::mpcGoalConstPtr&);
+  void setCollisionAvoidance();
 };
 
 #endif /* MPC_ACTION_SERVER_H */
