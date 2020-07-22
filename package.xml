@@ -51,6 +51,7 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>mobile_manipulator</depend>
+  <depend>mm_msgs</depend>
   <depend>mobile_control</depend>
   <depend>actionlib_msgs</depend>
   <exec_depend>message_generation</exec_depend>

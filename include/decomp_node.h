@@ -1,5 +1,5 @@
-#ifndef DECOMP_H
-#define DECOMP_H
+#ifndef DECOMP_NODE_H
+#define DECOMP_NODE_H
 
 //#include "bag_reader.hpp"
 //#include "txt_reader.hpp"
@@ -10,6 +10,7 @@
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <decomp_ros_msgs/PolyhedronArray.h>
 #include <decomp_ros_msgs/Polyhedron.h>
+#include <mm_msgs/LinearConstraint3DArray.h>
 #include <decomp_ros_utils.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <nav_msgs/Path.h>
@@ -24,6 +25,7 @@ private:
   ros::Publisher poly_pub_;
   ros::Publisher es_pub_;
   ros::Publisher cloud_pub_;
+  ros::Publisher constraint_pub_;
   tf::TransformListener *tfListenerPtr_;
   ros::Rate r_;
   sensor_msgs::PointCloud cloud_;
@@ -36,6 +38,8 @@ public:
   void cloud_to_vec(sensor_msgs::PointCloud2ConstPtr const& cloud);
   void cloud_to_vec(const sensor_msgs::PointCloud &cloud);
   void decompose();
+  mm_msgs::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
 };
 
-#endif /* DECOMP_H */
+
+#endif /* DECOMP_NODE_H */

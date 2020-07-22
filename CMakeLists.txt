@@ -15,10 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   sensor_msgs
   genmsg
+  mm_msgs
 )
 find_package(Eigen3 REQUIRED)
 find_package(decomp_util REQUIRED)
-find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -54,11 +54,6 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -128,10 +123,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${DECOMP_UTIL_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/mobile_mpc.cpp
@@ -240,12 +232,17 @@ catkin_add_gtest(mpc_forces_solver_test test/mpc_forces_solver_test.cpp)
 target_link_libraries(mpc_forces_solver_test mpc_lib)
   
 
-MESSAGE("INCLUDE_UTIL_INCLUDE_DIRS")
-MESSAGE(${DECOMP_UTIL_INCLUDE_DIRS})
-add_executable(decomp_test
-  src/decomp.cpp
+#add_executable(decomp_test
+#  src/decomp.cpp
+#)
+#target_link_libraries(decomp_test
+#  ${catkin_LIBRARIES}
+#)
+
+add_executable(decomp_node
+  src/decomp_node.cpp
 )
-target_link_libraries(decomp_test
+target_link_libraries(decomp_node
   ${catkin_LIBRARIES}
 )
 
