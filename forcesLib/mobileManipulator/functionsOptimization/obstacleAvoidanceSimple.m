@@ -1,6 +1,4 @@
 function ineq = obstacleAvoidanceSimple(z, p)
-
-
 x = z(1:3);
 q = z(4:10);
 slack = z(11);

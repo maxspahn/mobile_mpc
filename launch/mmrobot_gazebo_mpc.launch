@@ -45,8 +45,6 @@
     <arg name="boxer_control" value="$(arg boxer_control_mode)"/>
   </include>
 
-  <include file="$(find mobile_manipulator)/launch/obstacles_control.launch"/>
-
   <group if="$(arg demo)">
     <node name="demo_node" pkg="mobile_control" type="simpleTestControls.py"/>
   </group>

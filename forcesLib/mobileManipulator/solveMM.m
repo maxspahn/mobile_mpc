@@ -87,8 +87,8 @@ plot(goal_base_pos(1), goal_base_pos(2), 'rx');
 
 %% Converting obstacles and fill up
 
-r = 0.1;
-L = 0.9;
+r = 0.08;
+L = 0.544;
 params = repmat([dt, r, L, goal', weights, safetyMargin, planes', obstacles'], 1, H)';
 params = repmat([dt, r, L, goal', weights, safetyMargin, infPlanes], 1, H)';
 problem.all_parameters = params;

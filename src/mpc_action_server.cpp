@@ -3,11 +3,11 @@
 MPCAction::MPCAction(std::string name) :
   as_(nh_, name, boost::bind(&MPCAction::executeCB, this, _1), false),
   action_name_(name),
-  mpcInterface_(name)
+  mpcInterface_(name),
+  rate_(4)
 {
   as_.start();
-  obstacleArray obstacles = {-1.5, 0.0, 0.0, 1.0};
-  mpcInterface_.setObstacles(obstacles);
+  setCollisionAvoidance();
 }
 
 MPCAction::~MPCAction()
@@ -39,6 +39,26 @@ void MPCAction::parseProblem(const mobile_mpc::mpcGoalConstPtr &goal)
   mpcInterface_.parseProblem(goal_, weights_, errorWeights_);
 }
 
+void MPCAction::setCollisionAvoidance()
+{
+    obstacleArray oa = obstacleArray({-1.5, -6, 0, 1, 
+                                      -1.5, -6, 0, 1,
+                                      -1.5, -6, 0, 1,
+                                      -1.5, -6, 0, 1
+                                      });
+    planeArray pa = planeArray({-2.5,   -2, 0, 2.5,   -2, 0, -2.5,   -2,   2, 
+                                -2.5,   -3, 0, 2.5,   -3, 0, -2.5,   -3,   2, 
+                                   4,   -2, 0,   4,   -7, 0,  4.0, -2.0, 2.0, 
+                                   5,   -2, 0,   5,   -7, 0,  5.0, -2.0, 2.0, 
+                                  -2, -5.5, 0,   0, -5.5, 0,   -2, -5.5, 0.7, 
+                                  -2, -7.5, 0,   0, -7.5, 0,   -2, -7.5, 0.7, 
+                                  -2, -5.5, 0,  -2, -7.5, 0,   -2, -5.5, 0.7, 
+                                   0, -5.5, 0,   0, -7.5, 0,    0, -5.5, 0.7});
+    mpcInterface_.setObstacles(oa);
+    mpcInterface_.setPlanes(pa);
+}
+  
+
 void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
 {
   // helper variables
@@ -56,7 +76,9 @@ void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
 
   while (mpcInterface_.computeError() > maxError_)
   {
-    mpcInterface_.singleMPCStep();
+    curUArray u_opt = mpcInterface_.solve();
+    rate_.sleep();
+    mpcInterface_.publishVelocities(u_opt);
     if (as_.isPreemptRequested() || !ros::ok())
     {
       ROS_INFO("%s: Preempted", action_name_.c_str());

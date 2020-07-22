@@ -151,14 +151,14 @@ class MPCAction(object):
         nbObstacles = 5
         nbPlanes = 8
         self.obstacles = np.ones(nbObstacles * 4) * -100
-        plane1 = np.array([-2.5, -2, 0, 2.5, -2, 0, -2.5, -2, 2])
-        plane2 = np.array([-2.5, -3, 0, 2.5, -3, 0, -2.5, -3, 2])
-        plane3 = np.array([4, -2, 0, 4, -7, 0, 4, -2, 2])
-        plane4 = np.array([5, -2, 0, 5, -7, 0, 5, -2, 2])
-        plane5 = np.array([-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 0.7])
-        plane6 = np.array([-2, -7.5, 0, 0, -7.5, 0, -2, -7.5, 0.7])
-        plane7 = np.array([-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 0.7])
-        plane8 = np.array([0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 0.7])
+        plane1 = np.array([-2.5,   -2, 0, 2.5,   -2, 0, -2.5,   -2,   2])
+        plane2 = np.array([-2.5,   -3, 0, 2.5,   -3, 0, -2.5,   -3,   2])
+        plane3 = np.array([   4,   -2, 0,   4,   -7, 0,  4.0, -2.0, 2.0])
+        plane4 = np.array([   5,   -2, 0,   5,   -7, 0,  5.0, -2.0, 2.0])
+        plane5 = np.array([  -2, -5.5, 0,   0, -5.5, 0,   -2, -5.5, 0.7])
+        plane6 = np.array([  -2, -7.5, 0,   0, -7.5, 0,   -2, -7.5, 0.7])
+        plane7 = np.array([  -2, -5.5, 0,  -2, -7.5, 0,   -2, -5.5, 0.7])
+        plane8 = np.array([   0, -5.5, 0,   0, -7.5, 0,    0, -5.5, 0.7])
         self.planes = np.concatenate(
             (plane1, plane2, plane3, plane4, plane5, plane6, plane7, plane8)
         )
