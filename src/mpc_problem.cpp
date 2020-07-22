@@ -1,8 +1,19 @@
 #include "mpc_problem.h"
 
-MpcProblem::MpcProblem() : timeStep_(0.5)
+MpcProblem::MpcProblem(double timeStep, double safetyMargin) :
+  timeStep_(timeStep),
+  safetyMargin_(safetyMargin)
 {
   weights_ = weightArray({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+  configRobot_ = configArray({0.08, 0.544});
+}
+
+MpcProblem::MpcProblem() :
+  timeStep_(0.5),
+  safetyMargin_(0.1)
+{
+  weights_ = weightArray({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+  configRobot_ = configArray({0.08, 0.544});
 }
 
 MpcProblem::~MpcProblem(){}
@@ -15,6 +26,14 @@ weightArray MpcProblem::weights(){
   return weights_;
 }
 
+double MpcProblem::weight(int wI){
+  return weights_[wI];
+}
+
+void MpcProblem::weight(int wI, double val){
+  weights_[wI] = val;
+}
+
 void MpcProblem::goal(goalArray g)
 {
   goal_ = g;
@@ -25,9 +44,24 @@ goalArray MpcProblem::goal()
   return goal_;
 }
 
+void MpcProblem::goal(int gI, double val)
+{
+  goal_[gI] = val;
+}
+
+double MpcProblem::goal(int gI)
+{
+  return goal_[gI];
+}
+
 void MpcProblem::param(int i, double val)
 {
   params_[i] = val;
+}
+
+double MpcProblem::param(int i)
+{
+  return params_[i];
 }
 
 void MpcProblem::params(paramArray p)
@@ -50,6 +84,16 @@ curUArray MpcProblem::curU()
   return curU_;
 }
 
+void MpcProblem::curU(int cI, double val)
+{
+  curU_[cI] = val;
+}
+
+double MpcProblem::curU(int cI)
+{
+  return curU_[cI];
+}
+
 void MpcProblem::curState(curStateArray s)
 {
   curState_ = s;
@@ -60,6 +104,16 @@ curStateArray MpcProblem::curState()
   return curState_;
 }
 
+void MpcProblem::curState(int cI, double val)
+{
+  curState_[cI] = val;
+}
+
+double MpcProblem::curState(int cI)
+{
+  return curState_[cI];
+}
+
 void MpcProblem::obstacles(obstacleArray o)
 {
   obstacles_ = o;
@@ -68,6 +122,41 @@ void MpcProblem::obstacles(obstacleArray o)
 obstacleArray MpcProblem::obstacles()
 {
   return obstacles_;
+}
+
+double MpcProblem::obstacle(int oI)
+{
+  return obstacles_[oI];
+}
+
+void MpcProblem::planes(planeArray o)
+{
+  planes_ = o;
+}
+
+planeArray MpcProblem::planes()
+{
+  return planes_;
+}
+
+double MpcProblem::plane(int oI)
+{
+  return planes_[oI];
+}
+
+void MpcProblem::configRobot(configArray c)
+{
+  configRobot_ = c;
+}
+
+configArray MpcProblem::configRobot()
+{
+  return configRobot_;
+}
+
+double MpcProblem::configRobot(int cI)
+{
+  return configRobot_[cI];
 }
 
 void MpcProblem::slackVar(double s)
@@ -90,6 +179,16 @@ double MpcProblem::slackVel()
   return curU_[9];
 }
 
+double MpcProblem::timeStep()
+{
+  return timeStep_;
+}
+
+double MpcProblem::safetyMargin()
+{
+  return safetyMargin_;
+}
+/*
 void MpcProblem::setupParams()
 {
   for (int i = 0; i < NX; ++i) {
@@ -133,4 +232,47 @@ void MpcProblem::setAcadoVariables(ACADOvariables& acadoVariables)
     acadoVariables.x0[i] = curState_[i];
   }
 }
+
+void MpcProblem::setForcesVariables(mm_MPC_params& params)
+{
+  for (int i = 0; i < (NX + NS); ++i) {
+    params.xinit[i] = curState_[i];
+  }
+  for (int i = 0; i < NU; ++i) {
+    params.xinit[i+(NX + NS)] = curU_[i];
+  }
+  int time_horizon = 19;
+  int forcesParams = 20;
+  for (int i = 0; i < time_horizon; ++i)
+  {
+    for (int j = 0; j < (NX + NS); ++j)
+    {
+      params.x0[i * (NX + NS + NU) + j] = curState_[j];
+    }
+    for (int j = 0; j < (NX + NS); ++j)
+    {
+      params.x0[i * (NX + NS + NU) + j + (NX + NS)] = curState_[j];
+    }
+    printf("Iteration %d and current index %d\n", i, i * forcesParams);
+    params.all_parameters[i * (forcesParams) + 0] = timeStep_;
+    printf("params.all_parameters[0] : %1.5f\n", params.all_parameters[0]);
+    params.all_parameters[i * (forcesParams) + 1] = params_[10];
+    params.all_parameters[i * (forcesParams) + 2] = params_[11];
+    for (int j = 0; j < 10; ++j)
+    {
+      params.all_parameters[i * (forcesParams) + 3 + j] = params_[j];
+    }
+    params.all_parameters[i * (forcesParams) + 13] = params_[14];
+    params.all_parameters[i * (forcesParams) + 14] = params_[12];
+    params.all_parameters[i * (forcesParams) + 15] = params_[13];
+    params.all_parameters[i * (forcesParams) + 16] = params_[17];
+    params.all_parameters[i * (forcesParams) + 17] = params_[15];
+    params.all_parameters[i * (forcesParams) + 18] = params_[16];
+    // safetyMargin
+    params.all_parameters[i * (forcesParams) + 19] = 0.0;
+  }
+      
+  printf("params at the end %1.5f", params.all_parameters[0]);
+}
+*/
   

@@ -121,6 +121,7 @@ include_directories(
   include
   acado/generated_mpc
   acado/generated_mpc/qpoases/INCLUDE
+  forcesLib/mobileManipulator/mm_MPC/include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -181,32 +182,24 @@ target_link_libraries(mpc_acado_node
   ${catkin_LIBRARIES}
 )
 
-add_library(mpc_problem src/mpc_problem.cpp)
-target_link_libraries(mpc_problem
-  custom_acado
-  ${catkin_LIBRARIES}
+add_library(mpc_lib
+  src/acado_converter.cpp
+  src/forces_converter.cpp
+  src/mpc_problem.cpp
+  src/mpc_acado_solver.cpp
+  src/mpc_forces_solver.cpp
+  src/mpc_interface.cpp
 )
-add_library(mpc_solver src/mpc_solver.cpp)
-target_link_libraries(mpc_solver
+target_link_libraries(mpc_lib
   custom_acado
-  mpc_problem
-  ${catkin_LIBRARIES}
-)
-
-add_library(mpc_interface src/mpc_interface.cpp)
-target_link_libraries(mpc_interface
-  custom_acado
-  mpc_problem
-  mpc_solver
+  mpc_acado
+  ${CMAKE_SOURCE_DIR}/forcesLib/mobileManipulator/mm_MPC/lib/libmm_MPC_withModel.so
   ${catkin_LIBRARIES}
 )
 
 add_executable(mpc_node_pro src/mpc_node_pro.cpp)
 target_link_libraries(mpc_node_pro
-  custom_acado
-  mpc_interface
-  mpc_problem
-  mpc_solver
+  mpc_lib
   ${catkin_LIBRARIES}
 )
 
@@ -214,17 +207,31 @@ add_executable(mpc_server
   src/mpc_action_server.cpp
 )
 target_link_libraries(mpc_server
-  mpc_interface
+  mpc_lib
   ${catkin_LIBRARIES}
 )
 
-add_executable(mpc_client
-  src/mpc_action_client.cpp
-)
-target_link_libraries(mpc_client
-  mpc_interface
-  ${catkin_LIBRARIES}
-)
+##add_executable(mpc_client
+##  src/mpc_action_client.cpp
+##)
+##target_link_libraries(mpc_client
+##  mpc_lib
+##  ${catkin_LIBRARIES}
+##)
+
+
+## testing
+catkin_add_gtest(mpc_problem_test test/mpc_problem_test.cpp)
+target_link_libraries(mpc_problem_test mpc_lib)
+catkin_add_gtest(acado_converter_test test/acado_converter_test.cpp)
+target_link_libraries(acado_converter_test mpc_lib)
+catkin_add_gtest(forces_converter_test test/forces_converter_test.cpp)
+target_link_libraries(forces_converter_test mpc_lib)
+catkin_add_gtest(mpc_acado_solver_test test/mpc_acado_solver_test.cpp)
+target_link_libraries(mpc_acado_solver_test mpc_lib)
+catkin_add_gtest(mpc_forces_solver_test test/mpc_forces_solver_test.cpp)
+target_link_libraries(mpc_forces_solver_test mpc_lib)
+  
 
 
 ## Rename C++ executable without prefix

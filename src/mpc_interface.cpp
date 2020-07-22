@@ -1,8 +1,7 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  rate_(2),
-  mpcProblem_(),
+  mpcProblem_(0.25, 0.02),
   mpcSolver_(),
   name_(name)
 {
@@ -18,20 +17,6 @@ MpcInterface::MpcInterface(std::string name) :
 MpcInterface::~MpcInterface()
 {
   ROS_INFO("Calling Destructor of mpc");
-}
-
-void MpcInterface::runNode()
-{
-  rate_.sleep();
-  while (computeError() > 0.1)
-  //for (int i = 0; i < 30000; ++i)
-  {
-    //ROS_INFO("Attempting to get state");
-    singleMPCStep();
-    //ROS_INFO("Spinning cycle %d", i);
-    ros::spinOnce();
-  }
-  publishZeroVelocities();
 }
 
 void MpcInterface::problemSetup()
@@ -89,6 +74,11 @@ void MpcInterface::setObstacles(obstacleArray obstacles)
   mpcProblem_.obstacles(obstacles);
 }
 
+void MpcInterface::setPlanes(planeArray planes)
+{
+  mpcProblem_.planes(planes);
+}
+
 void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeightArray errorWeights)
 {
   mpcProblem_.goal(goal);
@@ -96,13 +86,6 @@ void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeight
   errorWeights_ = errorWeights;
 }
   
-
-void MpcInterface::singleMPCStep()
-{
-  curUArray u_opt = solve();
-  rate_.sleep();
-  publishVelocities(u_opt);
-}
 
 void MpcInterface::printState()
 {
@@ -118,7 +101,9 @@ curUArray MpcInterface::solve()
   getState();
   mpcProblem_.curU(curU_);
   mpcProblem_.curState(curState_);
-  curUArray optCommands = mpcSolver_.solveMPC(mpcProblem_);
+  mpcSolver_.setupMPC(mpcProblem_);
+  mpcSolver_.solveMPC();
+  curUArray optCommands = mpcSolver_.getOptimalControl();
   //ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
   curU_[0] = optCommands[0];
   curU_[1] = optCommands[1];

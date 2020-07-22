@@ -67,7 +67,7 @@ elseif strcmp(dynamics, 'acc')
 elseif strcmp(dynamics, 'simple')
     model.nvar = 3 + 7 + 1 + 2 + 7;                     % number of variables [x, y, theta, q (size : 7), slack, u1, u2, q_dot (size : 7)]
     model.neq= 3 + 7;                               % dimension of transition function
-    n_other_param = 3 + 3 + 7 + 6 + 1 + 4 * nbObstacles + 9 * nbPlanes;    % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
+    n_other_param = 3 + 3 + 7 + 6 + 1 + 4 * nbObstacles + 9 * nbPlanes;    % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, safetyMargin, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
     model.E = [eye(10, 10), zeros(10, 10)];
 end
 model.npar =  n_other_param;          % number of parameters
@@ -155,7 +155,7 @@ end
 %% Define solver options
 codeoptions = getOptions(solverName);
 codeoptions.maxit = 500;   % Maximum number of iterations
-codeoptions.printlevel = 2 ; % Use printlevel = 2 to print progress (but not for timings)
+codeoptions.printlevel = 1 ; % Use printlevel = 2 to print progress (but not for timings)
 codeoptions.optlevel = 2;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
 codeoptions.timing = 1;
 codeoptions.overwrite = 1;

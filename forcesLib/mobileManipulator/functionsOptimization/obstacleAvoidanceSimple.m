@@ -10,10 +10,10 @@ function ineq = obstacleAvoidanceSimple(z, p)
     %spheres = p(20:23);
     spheres = computeSpheres(q, x)';
 
-    objects = p(20 + nbPlanes * dimPlane + 1:end);
+    objects = p(21 + nbPlanes * dimPlane:end);
     nbObstacles = size(objects, 1)/4;
     nbSpheres = size(spheres, 1)/4;
-    planes = p(21: 20 + nbPlanes * dimPlane);
+    planes = p(21: 21 + nbPlanes * dimPlane);
 %     
 %     nbSpheres = size(spheres, 1);
     ineq = [];

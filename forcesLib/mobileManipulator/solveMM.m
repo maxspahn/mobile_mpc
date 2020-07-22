@@ -31,9 +31,9 @@ goal = [goal_base_pos; goal_arm_pos];
 problem.xinit = [start; 0; u_start];
 problem.x0 = repmat([start; u_start; 0], H, 1);
 
-obstacles = ones(5 * 4, 1) * -100;
+obstacles = ones(1 * 4, 1) * -100;
 planes = zeros(8 * 9, 1);
-%obstacles(1:4) = [6; 2; 0; 1];
+obstacles(1:4) = [-1.5; -6; 0; 1];
 %obstacles(5:8) = [11; 10; 0; 2];
 % obstacles(9:12) = [8; 7; 0; 0.1];
 line1 = [3, 15, 0, 12, 8, 0]';
@@ -64,9 +64,9 @@ end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
-weights = [1, 100, 0, 1000000000, 0, 0];
+weights = [1, 10, 0, 100, 0, 0];
 safetyMargin = 0.3;
-for i=1:0
+for i=1:1
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end
 plot(goal_base_pos(1), goal_base_pos(2), 'rx');
@@ -77,9 +77,10 @@ plot(goal_base_pos(1), goal_base_pos(2), 'rx');
 
 %% Converting obstacles and fill up
 
-r = 0.1;
-L = 0.9;
+r = 0.08;
+L = 0.544;
 params = repmat([dt, r, L, goal', weights, safetyMargin, planes', obstacles'], 1, H)';
+params = repmat([dt, r, L, goal', weights, safetyMargin, obstacles'], 1, H)';
 problem.all_parameters = params;
 
 curState = start;

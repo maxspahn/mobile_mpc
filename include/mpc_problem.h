@@ -4,16 +4,22 @@
 #include <array>
 #include <vector>
 
-#include "acado_common.h"
-#include "acado_auxiliary_functions.h"
+//#include "mm_MPC.h"
 
+#define NC          2   /* Number of config parameters. */
 #define NX          10  /* Number of differential state variables.  */
 #define NS          1   /* Number of slack variables. */
-#define NU          10  /* Number of control inputs. */
-#define NO          1   /* Numbero of obstacles. */
-#define NP          22  /* Number of online data values. */
-#define N           ACADO_N  /* Number of intervals in the horizon. */
 #define NW          6   /* Number of weights. */
+#define NU          10  /* Number of control inputs. */
+#define NUF         9   /* Number of control inputs for forces. */
+#define NO          5   /* Number of obstacles. */
+#define SO          4   /* Size of obstacle data. */
+#define NPLANES     8   /* Number of planes. */
+#define SPLANES     9   /* Size of plane data. */
+#define NP          110 /* Number of online data values. */
+#define NPF         112 /* Number of forces parameters. */
+#define N           21  /* Number of intervals in the horizon. */
+#define TH          20  /* Time horizon. */
 
 
 typedef std::array<double, NW> weightArray;
@@ -21,7 +27,9 @@ typedef std::array<double, NX> goalArray;
 typedef std::array<double, NU> curUArray;
 typedef std::array<double, NX + NS> curStateArray;
 typedef std::array<double, NP> paramArray;
-typedef std::array<double, NO * 4> obstacleArray;
+typedef std::array<double, NO * SO> obstacleArray;
+typedef std::array<double, NPLANES * SPLANES> planeArray;
+typedef std::array<double, NC> configArray;
 
 class MpcProblem
 {
@@ -32,30 +40,53 @@ private:
   curUArray curU_;
   curStateArray curState_;
   obstacleArray obstacles_;
+  planeArray planes_;
+  configArray configRobot_;
   double timeStep_;
+  double safetyMargin_;
 
 public:
   MpcProblem();
+  MpcProblem(double, double);
   ~MpcProblem();
   void weights(weightArray);
   weightArray weights();
+  void weight(int, double);
+  double weight(int);
   void goal(goalArray);
   goalArray goal();
+  void goal(int, double);
+  double goal(int);
   void param(int, double);
+  double param(int);
   void params(paramArray);
   paramArray params();
   void curU(curUArray);
   curUArray curU();
+  void curU(int, double);
+  double curU(int);
   void curState(curStateArray);
   curStateArray curState();
+  void curState(int, double);
+  double curState(int);
   void slackVar(double);
   double slackVar();
   void slackVel(double);
   double slackVel();
+  double timeStep();
+  double safetyMargin();
   void obstacles(obstacleArray);
   obstacleArray obstacles();
-  void setupParams();
-  void setAcadoVariables(ACADOvariables&);
+  double obstacle(int);
+  void planes(planeArray);
+  planeArray planes();
+  double plane(int);
+  void configRobot(configArray);
+  configArray configRobot();
+  double configRobot(int);
+  //void setupParams();
+  //void setAcadoVariables(ACADOvariables&);
+  //void setForcesVariables(mm_MPC_params&);
 };
 
 #endif /* MPC_PROBLEM_H */  
