@@ -30,6 +30,17 @@ TEST_F(MpcProblemTest, checkSetWeights)
   EXPECT_THAT(mpcProblem_.weight(5), DoubleNear(1.0, EPSILON));
   EXPECT_THAT(mpcProblem_.weight(3), DoubleNear(5.2, EPSILON));
 }
+
+TEST_F(MpcProblemTest, checkDefaultInfPlanes)
+{
+  EXPECT_EQ(mpcProblem_.infPlanes().size(), NINFPLA * SINFPLA);
+  if (NINFPLA == 15) {
+    EXPECT_THAT(mpcProblem_.infPlane(0), DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(mpcProblem_.infPlane(1), DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(mpcProblem_.infPlane(2), DoubleNear(1.0, EPSILON));
+    EXPECT_THAT(mpcProblem_.infPlane(3), DoubleNear(-5.0, EPSILON));
+  }
+}
   
 
 int main(int argc, char **argv) {

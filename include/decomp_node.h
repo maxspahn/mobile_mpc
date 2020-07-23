@@ -38,6 +38,7 @@ public:
   void cloud_to_vec(sensor_msgs::PointCloud2ConstPtr const& cloud);
   void cloud_to_vec(const sensor_msgs::PointCloud &cloud);
   void decompose();
+  Vec3f get_base_pos();
   mm_msgs::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
 };
 

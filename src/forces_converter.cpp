@@ -7,7 +7,8 @@ ForcesConverter::ForcesConverter()
   goalIndexOffset_ = 3;
   weightsIndexOffset_ = 13;
   planesIndexOffset_ = 20;
-  obstaclesIndexOffset_ = 20 + NPLANES * SPLANES;
+  infPlanesIndexOffset_ = 20 + NPLANES * SPLANES;
+  obstaclesIndexOffset_ = 20 + NPLANES * SPLANES + NINFPLA * SINFPLA;
   safetyMarginIndexOffset_ = 19;
 }
 
@@ -23,6 +24,10 @@ void ForcesConverter::setupParams(MpcProblem mp)
   }
   for (int pI = 0; pI < (NPLANES * SPLANES); ++pI) {
     params_[pI + planesIndexOffset_] = mp.plane(pI);
+  }
+  int ipIMax = NINFPLA * SINFPLA;
+  for (int ipI = 0; ipI < ipIMax; ++ipI) {
+    params_[ipI + infPlanesIndexOffset_] = mp.infPlane(ipI);
   }
   for (int oI = 0; oI < (NO * SO); ++oI) {
     params_[oI + obstaclesIndexOffset_] = mp.obstacle(oI);

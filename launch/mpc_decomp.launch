@@ -1,0 +1,13 @@
+<launch>
+  <!-- arg name="argument name" default="default_value"/-->
+
+  
+  <!--node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/-->
+  <node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/>
+  <!--node name="mpc_client" pkg="mobile_mpc" type="mpcActionClient" respawn="false" output="screen"/-->
+  <!--node name="mpc_goal_publisher" pkg="mobile_mpc" type="send_mpc_base_goal.py" respawn="false" output="screen">
+  </node-->
+  <node name="rviz" type="rviz" pkg="rviz"
+    args="-d $(find mobile_mpc)/config/polyhedron.rviz"/>
+
+</launch>

@@ -1,7 +1,7 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  mpcProblem_(0.25, 0.02),
+  mpcProblem_(0.25, 0.20),
   mpcSolver_(),
   name_(name)
 {
@@ -9,6 +9,7 @@ MpcInterface::MpcInterface(std::string name) :
   pubLeftWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/left_wheel/command", 10);
   pubArm_ = nh_.advertise<std_msgs::Float64MultiArray>("/mmrobot/multijoint_command", 10);
   subJointPosition_ = nh_.subscribe("/mmrobot/joint_states", 10, &MpcInterface::jointState_cb, this);
+  subConstraints_ = nh_.subscribe("/constraints", 10, &MpcInterface::constraints_cb, this);
   curState_ = {0};
   curU_ = {0};
   problemSetup();
@@ -62,6 +63,21 @@ void MpcInterface::jointState_cb(const sensor_msgs::JointState::ConstPtr& data)
   for (int i = 0; i < 2; ++i) {
     //curU_[i] = data->velocity[i+10];
   }
+}
+
+void MpcInterface::constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+{
+  for (int i = 0; i < data->constraints.size() ; ++i)
+  {
+    mpcProblem_.infPlane(4 * (i - 1) + 0, -1 * data->constraints[i].A[0]);
+    mpcProblem_.infPlane(4 * (i - 1) + 1, -1 * data->constraints[i].A[1]);
+    mpcProblem_.infPlane(4 * (i - 1) + 2, -1 * data->constraints[i].A[2]);
+    mpcProblem_.infPlane(4 * (i - 1) + 3, -1 * data->constraints[i].b);
+  }
+  /*
+  std::cout << "Received new constraints" << std::endl;
+  printf("Plane[0] : A = [%1.4f, %1.4f, %1.4f], b = %1.4f\n", mpcProblem_.infPlane(0), mpcProblem_.infPlane(1), mpcProblem_.infPlane(2), mpcProblem_.infPlane(3));
+  */
 }
 
 void MpcInterface::setGoal(goalArray goal)

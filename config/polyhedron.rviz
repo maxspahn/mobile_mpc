@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /PolyhedronArray1
         - /EllipsoidArray1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 727
   - Class: rviz/Selection
@@ -166,6 +167,190 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        chassis_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        depth_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        extrusion1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        extrusion2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        extrusion3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        extrusion4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_laser:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        internal_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        lift_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_hand:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_leftfinger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link7:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mmrobot_link8:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        mmrobot_rightfinger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rear_left_sonar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rear_right_sonar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rotacastor_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rotacastor_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        stereo:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        stereo_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        stereo_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        top_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        top_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        top_mount_bottom:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: mmrobot/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255

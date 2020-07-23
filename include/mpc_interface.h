@@ -9,6 +9,7 @@
 #include "tf/transform_listener.h"
 
 #include "mpc_forces_solver.h"
+#include <mm_msgs/LinearConstraint3DArray.h>
 
 #include <cmath>
 
@@ -23,6 +24,7 @@ public:
   void publishVelocities(curUArray vel);
   void publishZeroVelocities();
   void jointState_cb(const sensor_msgs::JointState::ConstPtr&);
+  void constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void printState();
   void setGoal(goalArray);
   void setObstacles(obstacleArray);
@@ -41,6 +43,7 @@ private:
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;
   ros::Subscriber subJointPosition_;
+  ros::Subscriber subConstraints_;
   tf::TransformListener tfListener;
   curStateArray curState_;
   curUArray curU_;

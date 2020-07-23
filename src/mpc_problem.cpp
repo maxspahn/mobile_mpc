@@ -6,6 +6,7 @@ MpcProblem::MpcProblem(double timeStep, double safetyMargin) :
 {
   weights_ = weightArray({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
   configRobot_ = configArray({0.08, 0.544});
+  initializeConstraints();
 }
 
 MpcProblem::MpcProblem() :
@@ -14,9 +15,20 @@ MpcProblem::MpcProblem() :
 {
   weights_ = weightArray({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
   configRobot_ = configArray({0.08, 0.544});
+  initializeConstraints();
 }
 
 MpcProblem::~MpcProblem(){}
+
+void MpcProblem::initializeConstraints()
+{
+  for (int i = 0; i < NINFPLA; ++i) {
+    infPlanes_[SINFPLA * i + 0] = 0.0;
+    infPlanes_[SINFPLA * i + 1] = 0.0;
+    infPlanes_[SINFPLA * i + 2] = 1.0;
+    infPlanes_[SINFPLA * i + 3] = -5.0;
+  }
+}
 
 void MpcProblem::weights(weightArray w)
 {
@@ -129,9 +141,9 @@ double MpcProblem::obstacle(int oI)
   return obstacles_[oI];
 }
 
-void MpcProblem::planes(planeArray o)
+void MpcProblem::planes(planeArray p)
 {
-  planes_ = o;
+  planes_ = p;
 }
 
 planeArray MpcProblem::planes()
@@ -139,9 +151,29 @@ planeArray MpcProblem::planes()
   return planes_;
 }
 
-double MpcProblem::plane(int oI)
+double MpcProblem::plane(int pI)
 {
-  return planes_[oI];
+  return planes_[pI];
+}
+
+void MpcProblem::infPlanes(infPlaneArray ip)
+{
+  infPlanes_ = ip;
+}
+
+infPlaneArray MpcProblem::infPlanes()
+{
+  return infPlanes_;
+}
+
+double MpcProblem::infPlane(int ipI)
+{
+  return infPlanes_[ipI];
+}
+
+void MpcProblem::infPlane(int ipI, double val)
+{
+  infPlanes_[ipI] = val;
 }
 
 void MpcProblem::configRobot(configArray c)

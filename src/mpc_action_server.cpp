@@ -41,6 +41,7 @@ void MPCAction::parseProblem(const mobile_mpc::mpcGoalConstPtr &goal)
 
 void MPCAction::setCollisionAvoidance()
 {
+    /*
     obstacleArray oa = obstacleArray({-1.5, -6, 0, 1, 
                                       -1.5, -6, 0, 1,
                                       -1.5, -6, 0, 1,
@@ -56,6 +57,7 @@ void MPCAction::setCollisionAvoidance()
                                    0, -5.5, 0,   0, -7.5, 0,    0, -5.5, 0.7});
     mpcInterface_.setObstacles(oa);
     mpcInterface_.setPlanes(pa);
+    */
 }
   
 

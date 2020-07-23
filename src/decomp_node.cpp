@@ -38,6 +38,19 @@ void Decomp::cloud_to_vec(const sensor_msgs::PointCloud &cloud) {
   }
 }
 
+Vec3f Decomp::get_base_pos() {
+  Vec3f pos_base = Vec3f(0, 0, 0);
+  tf::StampedTransform strans;
+  tfListenerPtr_->lookupTransform("odom", "base_link", ros::Time(0), strans);
+  tf::Vector3 posBase = strans.getOrigin();
+  pos_base[0] = posBase[0];
+  pos_base[1] = posBase[1];
+  pos_base[2] = posBase[2];
+  return pos_base;
+}
+
+
+
 void Decomp::decompose() {
   tfListenerPtr_->waitForTransform("/odom", "/depth_camera", ros::Time::now(), ros::Duration(1.0));
   sensor_msgs::PointCloud cloud_transformed;
@@ -45,7 +58,7 @@ void Decomp::decompose() {
   tfListenerPtr_->transformPointCloud("odom", cloud_, cloud_transformed);
   cloud_to_vec(cloud_transformed);
    
-  Vec3f seed_center = Vec3f(0, -4, 0.5);
+  Vec3f seed_center = get_base_pos();
   Vec3f wayPoint1 = Vec3f(3, 0, 0.5);
   Vec3f wayPoint2 = Vec3f(3, -4, 0.5);
   Vec3f wayPoint3 = Vec3f(-3, -4.4, 0.5);

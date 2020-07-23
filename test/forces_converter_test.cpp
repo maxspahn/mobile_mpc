@@ -33,6 +33,18 @@ TEST_F(ForcesConverterTest, testParamSetup)
   EXPECT_THAT(p[2], DoubleNear(0.544, EPSILON));
 }
 
+TEST_F(ForcesConverterTest, testParamSetupInfPlanes)
+{
+  converter_.setupParams(mpcProblem_);
+  forcesParamArray p = converter_.params();
+  EXPECT_EQ(p.size(), NPF);
+  EXPECT_THAT(p[20], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(p[21], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(p[22], DoubleNear(1.0, EPSILON));
+  EXPECT_THAT(p[23], DoubleNear(-5.0, EPSILON));
+  EXPECT_THAT(p[23 + (NINFPLA-1) * SINFPLA], DoubleNear(-5.0, EPSILON));
+}
+
 TEST_F(ForcesConverterTest, paramsConfig)
 {
   converter_.setupParams(mpcProblem_);
@@ -77,6 +89,22 @@ TEST_F(ForcesConverterTest, paramsSafetyObstacles)
   mm_MPC_params mp = converter_.forces_params();
   // safetyMargin
   EXPECT_THAT(mp.all_parameters[19 * NPF + 19], DoubleNear(0.1, EPSILON));
+}
+
+// Only sucessful if NO, NPLANES == 0
+TEST_F(ForcesConverterTest, paramsInfPlanes)
+{
+  converter_.setupParams(mpcProblem_);
+  converter_.setForcesVariables(mpcProblem_);
+  mm_MPC_params mp = converter_.forces_params();
+  EXPECT_THAT(mp.all_parameters[20], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[21], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[22], DoubleNear(1.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[23], DoubleNear(-5.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[23 + (NINFPLA-1) * SINFPLA], DoubleNear(-5.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[2 * NPF + 21], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[4 * NPF + 22], DoubleNear(1.0, EPSILON));
+  EXPECT_THAT(mp.all_parameters[7 * NPF + 23], DoubleNear(-5.0, EPSILON));
 }
 
 TEST_F(ForcesConverterTest, testVariablesSetXinit)
