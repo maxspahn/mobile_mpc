@@ -1,47 +1,74 @@
 #include "decomp_node.h"
 
 Decomp::Decomp() : r_(10) {
+  ros::service::waitForService("assemble_scans");
   sCloud_ = nh_.subscribe("/depth_camera/depth/points", 100, &Decomp::cloud_callback, this);
+  laserCloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("laserCloud", 1, true);
+  laserCloudT_pub_ = nh_.advertise<sensor_msgs::PointCloud>("laserCloudT", 1, true);
   poly_pub_ = nh_.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
   es_pub_ = nh_.advertise<decomp_ros_msgs::EllipsoidArray>("ellipsoid_array", 1, true);
   cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("cloud", 1, true);
   constraint_pub_ = nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints", 1, true);
-  obs_.resize(307200);
+  assembler_client_ = nh_.serviceClient<laser_assembler::AssembleScans>("assemble_scans");
   tfListenerPtr_ = new tf::TransformListener();
 }
 
 void Decomp::cloud_callback (sensor_msgs::PointCloud2ConstPtr const& cloud_msg){
   sensor_msgs::PointCloud cloud;
-  sensor_msgs::convertPointCloud2ToPointCloud(*cloud_msg, cloud_);
-}
-
-void Decomp::cloud_to_vec(sensor_msgs::PointCloud2ConstPtr const& cloud) {
-  sensor_msgs::PointCloud2Ptr points_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-  sensor_msgs::PointCloud2ConstIterator<float> iter_x(*cloud, "x");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_y(*cloud, "y");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_z(*cloud, "z");
-  unsigned int i;
-  for (i = 0; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z,  ++i) {
-    if (std::isnan(iter_x[0]) || std::isnan(iter_y[0]) || std::isnan(iter_z[0])) continue;
-    obs_[i](0) = iter_x[0];
-    obs_[i](1) = iter_y[0];
-    obs_[i](2) = iter_z[0];
-  }
+  sensor_msgs::convertPointCloud2ToPointCloud(*cloud_msg, cameraCloud_);
 }
 
 void Decomp::cloud_to_vec(const sensor_msgs::PointCloud &cloud) {
-  obs_.resize(cloud.points.size());
+  cameraObs_.resize(cloud.points.size());
   for (unsigned int i = 0; i < cloud.points.size(); i++) {
-    obs_[i](0) = cloud.points[i].x;
-    obs_[i](1) = cloud.points[i].y;
-    obs_[i](2) = cloud.points[i].z;
+    cameraObs_[i](0) = cloud.points[i].x;
+    cameraObs_[i](1) = cloud.points[i].y;
+    cameraObs_[i](2) = cloud.points[i].z;
   }
+}
+
+void Decomp::processLaserCloud() {
+  laser_assembler::AssembleScans srv;
+  srv.request.begin = ros::Time(0.0);
+  srv.request.end   = ros::Time::now();
+  if (assembler_client_.call(srv)) {
+    tfListenerPtr_->waitForTransform("/odom", "/front_laser", ros::Time::now(), ros::Duration(1.0));
+    sensor_msgs::PointCloud cloud = srv.response.cloud;
+    sensor_msgs::PointCloud cloud_transformed;
+    cloud_transformed.header.frame_id = "front_laser";
+    laserCloud_pub_.publish(cloud);
+    tfListenerPtr_->transformPointCloud("odom", cloud, cloud_transformed);
+    laserObs_.resize(cloud_transformed.points.size());
+    cloud_transformed.header.frame_id = "odom";
+    laserCloudT_pub_.publish(cloud_transformed);
+    for (unsigned int i = 0; i < cloud_transformed.points.size(); ++i) {
+      laserObs_[i](0) = cloud_transformed.points[i].x;
+      laserObs_[i](1) = cloud_transformed.points[i].y;
+      laserObs_[i](2) = cloud_transformed.points[i].z;
+    }
+  }
+}
+
+vec_Vec3f Decomp::join_obs() {
+  vec_Vec3f obs;
+  obs.resize(cameraObs_.size() + laserObs_.size());
+  for (unsigned int i = 0; i < cameraObs_.size(); ++i) {
+    obs[i](0) = cameraObs_[i](0);
+    obs[i](1) = cameraObs_[i](1);
+    obs[i](2) = cameraObs_[i](2);
+  }
+  for (unsigned int i = 0; i < laserObs_.size(); ++i) {
+    obs[i + cameraObs_.size()](0) = laserObs_[i](0);
+    obs[i + cameraObs_.size()](1) = laserObs_[i](1);
+    obs[i + cameraObs_.size()](2) = laserObs_[i](2);
+  }
+  return obs;
 }
 
 Vec3f Decomp::get_base_pos() {
   Vec3f pos_base = Vec3f(0, 0, 0);
   tf::StampedTransform strans;
-  tfListenerPtr_->lookupTransform("odom", "base_link", ros::Time(0), strans);
+  tfListenerPtr_->lookupTransform("odom", "top_mount_bottom", ros::Time(0), strans);
   tf::Vector3 posBase = strans.getOrigin();
   pos_base[0] = posBase[0];
   pos_base[1] = posBase[1];
@@ -54,9 +81,11 @@ Vec3f Decomp::get_base_pos() {
 void Decomp::decompose() {
   tfListenerPtr_->waitForTransform("/odom", "/depth_camera", ros::Time::now(), ros::Duration(1.0));
   sensor_msgs::PointCloud cloud_transformed;
-  if (cloud_.points.size() == 0) return;
-  tfListenerPtr_->transformPointCloud("odom", cloud_, cloud_transformed);
+  if (cameraCloud_.points.size() == 0) return;
+  tfListenerPtr_->transformPointCloud("odom", cameraCloud_, cloud_transformed);
   cloud_to_vec(cloud_transformed);
+  processLaserCloud();
+  vec_Vec3f obs = join_obs();
    
   Vec3f seed_center = get_base_pos();
   Vec3f wayPoint1 = Vec3f(3, 0, 0.5);
@@ -70,7 +99,7 @@ void Decomp::decompose() {
   path.push_back(wayPoint4);
   //EllipsoidDecomp3D decomp_util;
   SeedDecomp3D decomp_util(seed_center);
-  decomp_util.set_obs(obs_);
+  decomp_util.set_obs(obs);
   decomp_util.set_local_bbox(Vec3f(5, 5, 2));
   //decomp_util.dilate(path);
   decomp_util.dilate(5.0);
@@ -82,8 +111,8 @@ void Decomp::decompose() {
   polys.push_back(decomp_util.get_polyhedron());
 
   // Visualization
-  cloud_transformed.header.frame_id = "odom";
-  cloud_pub_.publish(cloud_transformed);
+  //cloud_transformed.header.frame_id = "odom";
+  //cloud_pub_.publish(cloud_transformed);
   decomp_ros_msgs::PolyhedronArray poly_msg = DecompROS::polyhedron_array_to_ros(polys);
   decomp_ros_msgs::EllipsoidArray es_msg = DecompROS::ellipsoid_array_to_ros(es);
   poly_msg.header.frame_id = "odom";

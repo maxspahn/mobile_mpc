@@ -54,6 +54,9 @@
   <depend>mm_msgs</depend>
   <depend>mobile_control</depend>
   <depend>actionlib_msgs</depend>
+  <depend>laser_geometry</depend>
+  <depend>tf</depend>
+  <depend>sensor_msgs</depend>
   <exec_depend>message_generation</exec_depend>
 
 

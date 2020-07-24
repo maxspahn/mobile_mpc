@@ -1,6 +1,12 @@
 <launch>
   <!-- arg name="argument name" default="default_value"/-->
 
+  <node type="laser_scan_assembler" pkg="laser_assembler"
+        name="my_assembler">
+    <remap from="scan" to="/front/scan"/>
+    <param name="max_scans" type="int" value="40" />
+    <param name="fixed_frame" type="string" value="base_link" />
+  </node>
   
   <!--node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/-->
   <node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/>

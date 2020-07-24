@@ -246,6 +246,14 @@ target_link_libraries(decomp_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(laserScan_assem
+  src/laser_scan_assembler.cpp
+)
+
+target_link_libraries(laserScan_assem
+  ${catkin_LIBRARIES}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
