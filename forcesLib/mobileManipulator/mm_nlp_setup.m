@@ -159,7 +159,7 @@ end
 %% Define solver options
 codeoptions = getOptions(solverName);
 codeoptions.maxit = 500;   % Maximum number of iterations
-codeoptions.printlevel = 2; % Use printlevel = 2 to print progress (but not for timings)
+codeoptions.printlevel = 0; % Use printlevel = 2 to print progress (but not for timings)
 codeoptions.optlevel = 2;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
 codeoptions.timing = 1;
 codeoptions.overwrite = 1;

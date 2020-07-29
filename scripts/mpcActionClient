@@ -24,19 +24,22 @@ def mpc_client():
 
     # Creates a goal to send to the action server.
     errorWeights = Float64MultiArray()
-    errorWeights.data = np.array([1.0, 0.5, 1.0])
+    errorWeights.data = np.array([1.0, 1.0, 1.0])
     myMaxError = Float64()
-    myMaxError.data = 0.15
+    myMaxError.data = 0.3
     myMPCWeights = Float64MultiArray()
-    myMPCWeights.data = np.array([1, 100, 5, 1000000000, 0.5, 10])
+    myMPCWeights.data = np.array([1, 100, 10, 1000000000, 0.5, 10])
     #myMPCWeights.data = np.array([100, 5, 5, 0.5, 10, 1000000000])
     goals = []
     goalData1 = Float64MultiArray()
-    goalData1.data = np.array([-0, -0, -1.57, 1, -0.5, 0, -1, 0, 1, 0])
+    goalData1.data = np.array([0, 2, -1.54, 1, -0.5, 0, -1, 0, 1, 0])
     goalData2 = Float64MultiArray()
-    goalData2.data = np.array([-3, 3, 1.57, 1.5, 1.2, 0, -1, 0, 2, 0])
+    goalData2.data = np.array([-3, -4, 1.1, 1, -0.5, 0, -1, 0, 1, 0])
+    goalData3 = Float64MultiArray()
+    goalData3.data = np.array([2, -6, 1.57, 1.5, -1.2, 0, -1, 0.3, 2, 0])
     goals.append(goalData1)
     goals.append(goalData2)
+    goals.append(goalData3)
 
     for oneGoal in goals:
         goal = mobile_mpc.msg.mpcGoal(

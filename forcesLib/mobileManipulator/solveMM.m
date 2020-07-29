@@ -46,12 +46,11 @@ planes(37:45) = [-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 2]';
 planes(46:54) = [-2, -7.5, 0, 0, -7.5, 0, -2, -7.5, 2]';
 planes(55:63) = [-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 2]';
 planes(64:72) = [0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 2]';
-defaultInfPlane = [0, 0, 1, -5];
+defaultInfPlane = [0, 0, 1, -3];
 infPlanes = repmat(defaultInfPlane', 15, 1);
-% infPlanes = zeros(3 * 4, 0);
-% infPlanes(1:4) = [-1, 1, 0, -6]';
-% infPlanes(5:8) = [1, 0, 0, -4]';
-% infPlanes(9:12) = [0.5, -1, 0, -6]';
+infPlanes(1:4) = [-1, 0, 0, -3]';
+infPlanes(5:8) = [1, 0, 0, -4]';
+infPlanes(9:12) = [0.5, -1, 0, -6]';
 
 %planes = repmat(planes(1:36), 2, 1);
 %planes = repmat(planes(55:63), 8, 1);
@@ -76,8 +75,8 @@ end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
-weights = [1, 100, 0, 100, 0, 0];
-safetyMargin = 0.0;
+weights = [1, 100, 0, 100000000, 0, 0];
+safetyMargin = 0.4;
 for i=1:0
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end

@@ -67,12 +67,20 @@ void MpcInterface::jointState_cb(const sensor_msgs::JointState::ConstPtr& data)
 
 void MpcInterface::constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
 {
+  //std::cout << "Receiving Constraints" << std::endl;
+  for (int i = 0; i < 15; ++i) {
+    mpcProblem_.infPlane(4 * i + 0, 0);
+    mpcProblem_.infPlane(4 * i + 1, 0);
+    mpcProblem_.infPlane(4 * i + 2, 1);
+    mpcProblem_.infPlane(4 * i + 3, -10);
+  }
   for (int i = 0; i < data->constraints.size() ; ++i)
   {
-    mpcProblem_.infPlane(4 * (i - 1) + 0, -1 * data->constraints[i].A[0]);
-    mpcProblem_.infPlane(4 * (i - 1) + 1, -1 * data->constraints[i].A[1]);
-    mpcProblem_.infPlane(4 * (i - 1) + 2, -1 * data->constraints[i].A[2]);
-    mpcProblem_.infPlane(4 * (i - 1) + 3, -1 * data->constraints[i].b);
+    //printf("Constraint received : %1.2fx + %1.2fy + %1.2fz = %1.2f\n", data->constraints[i].A[0], data->constraints[i].A[1], data->constraints[i].A[2], data->constraints[i].b);
+    mpcProblem_.infPlane(4 * i + 0, -1 * data->constraints[i].A[0]);
+    mpcProblem_.infPlane(4 * i + 1, -1 * data->constraints[i].A[1]);
+    mpcProblem_.infPlane(4 * i + 2, -1 * data->constraints[i].A[2]);
+    mpcProblem_.infPlane(4 * i + 3, -1 * data->constraints[i].b);
   }
   /*
   std::cout << "Received new constraints" << std::endl;

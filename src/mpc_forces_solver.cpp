@@ -32,17 +32,15 @@ void MpcForcesSolver::setupMPC(MpcProblem& mp){
 
 void MpcForcesSolver::solveMPC(){
   mm_MPC_params forces_params = converter_.forces_params();
-  /*
   for (int i = 0; i < 20; ++i) {
     printf("xinit[%d] : %1.4f\n", i, forces_params.xinit[i]);
   }
-  for (int a = 0; a < 400; ++a) {
+  for (int a = 0; a < 20; ++a) {
     printf("x0[%d] : %1.4f\n", a, forces_params.x0[a]);
   }
-  for (int b = 0; b < 1600; ++b) {
+  for (int b = 0; b < 80; ++b) {
     printf("all_params[%d] : %1.4f\n", b, forces_params.all_parameters[b]);
   }
-  */
   int exitFlag = mm_MPC_solve(&forces_params, &forces_output_, &forces_info_, stdout, extfunc_eval);
   printf("ExitFlag : %d\n", exitFlag);
 }
