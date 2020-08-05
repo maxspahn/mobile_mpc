@@ -10,8 +10,9 @@ clc;
 % hold(ax1, 'on');
 
 fig2 = figure(2);
-set(fig2, 'Position', get(0, 'Screensize'))
-ax2 = axes('Parent', fig2, 'xlim', [-100, 100]);
+set(fig2, 'Position', get(0, 'Screensize'));
+set(fig2, 'WindowStyle', 'docked');
+ax2 = axes('Parent', fig2, 'xlim', [-20, 20]);
 axis equal
 hold(ax2, 'on');
 
@@ -20,21 +21,21 @@ hold(ax2, 'on');
 H = 20;
 
 dt = 0.5;
-base_pos = [-3; -2; 0];
-arm_pos = [0; 0; 0; -1; 0.5; 1.5; 0];
+base_pos = [0; 0; 0];
+arm_pos = [0; 0; 0; -1; 0; 1; 0];
 u_start = zeros(9, 1);
 start = [base_pos; arm_pos];
-goal_base_pos = [6; 4; pi/2];
-goal_arm_pos = [1; 1; -1.5; -1.5; 0.5; 1; 0.2];
+goal_base_pos = [0; 0; 0];
+goal_arm_pos = [1; 0; -1.5; -1.5; 0.5; 1; 0.2];
 
 goal = [goal_base_pos; goal_arm_pos];
 
 problem.xinit = [start; 0; u_start];
 problem.x0 = repmat([start; u_start; 0], H, 1);
 
-obstacles = ones(5 * 4, 1) * -100;
-planes = zeros(8 * 9, 1);
-%obstacles(1:4) = [6; 2; 0; 1];
+obstacles = ones(1 * 4, 1) * -100;
+planes = zeros(1 * 9, 1);
+%obstacles(1:4) = [1; -3; 2.1; 1];
 %obstacles(5:8) = [11; 10; 0; 2];
 % obstacles(9:12) = [8; 7; 0; 0.1];
 line1 = [3, 15, 0, 12, 8, 0]';
@@ -46,11 +47,14 @@ planes(37:45) = [-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 2]';
 planes(46:54) = [-2, -7.5, 0, 0, -7.5, 0, -2, -7.5, 2]';
 planes(55:63) = [-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 2]';
 planes(64:72) = [0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 2]';
+planes = [-1.5, 5, 0, 1.5, 5, 0, -1.5, 5, 2]';
+planes = [0, 0, 5, 5, 0, 5, 0, 5, 5]';
 defaultInfPlane = [0, 0, 1, -3];
-infPlanes = repmat(defaultInfPlane', 15, 1);
-infPlanes(1:4) = [-1, 0, 0, -3]';
-infPlanes(5:8) = [1, 0, 0, -4]';
-infPlanes(9:12) = [0.5, -1, 0, -6]';
+infPlanes = repmat(defaultInfPlane', 45, 1);
+infPlanes(1:4) = [-1, -1, 0, -4]';
+infPlanes(5:8) = [-1, 0, 0, -4]';
+% infPlanes(9:12) = [0, 1, 0, -2]';
+% infPlanes(9:12) = [0.5, -1, 0, -6]';
 
 %planes = repmat(planes(1:36), 2, 1);
 %planes = repmat(planes(55:63), 8, 1);
@@ -63,7 +67,7 @@ infPlanes(9:12) = [0.5, -1, 0, -6]';
 % plane3 = [1, 0, 0, 0, 2, 0, 1]';
 % plane4 = [0, 1, 0, 5.5, 3, 0, 5.5]';
 %planes = [plane1; plane2; plane3; plane4];
-for i=1:0
+for i=1:1
     [xp, yp, zp] = planeEquation(planes(9 * (i -1) + 1: 9 * (i -1) + 9));
     plot(ax2, xp, yp);
 end
@@ -75,8 +79,8 @@ end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
-weights = [1, 100, 0, 100000000, 0, 0];
-safetyMargin = 0.4;
+weights = [1, 10, 1, 10000, 0, 10];
+safetyMargin = 0.5;
 for i=1:0
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end
@@ -86,13 +90,19 @@ plot(goal_base_pos(1), goal_base_pos(2), 'rx');
 % set(ht1, 'Matrix', posMatrix);
 % rectangle('Parent', ht1, 'Position', [-0.5, -0.5, 1, 1]);
 
+
+
 %% Converting obstacles and fill up
 
 r = 0.08;
 L = 0.544;
-params = repmat([dt, r, L, goal', weights, safetyMargin, planes', obstacles'], 1, H)';
+
+%% Debugging
 params = repmat([dt, r, L, goal', weights, safetyMargin, infPlanes'], 1, H)';
+%params = repmat([dt, r, L, goal', weights, safetyMargin, obstacles'], 1, H)';
 problem.all_parameters = params;
+ineq = obstacleAvoidanceSimple(problem.xinit, params(1:200));
+cost = costFunctionSimple(problem.xinit, params(1:200));
 
 curState = start;
 newState = start;
@@ -100,7 +110,9 @@ error = 10000;
 t = 0;
 while 1
     [output, exitflag, info] = mm_MPC(problem);
+    %ForcesDumpProblem(problem, tag);
     %disp(info.res_ineq);
+    disp(exitflag);
     curState = output.x02(1:10);
     curU = output.x01(12:13);
     slack = output.x02(11);
@@ -126,7 +138,7 @@ while 1
     pause(0.1);
     
     oldError = error;
-    error = norm(curState(1:2) - goal(1:2));
+    error = norm(curState - goal);
     %disp(error);
     if error < 0.1 || oldError <= 0.1 * error
         break;

@@ -1,7 +1,7 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  mpcProblem_(0.25, 0.20),
+  mpcProblem_(1.0, 0.20),
   mpcSolver_(),
   name_(name)
 {
@@ -9,7 +9,9 @@ MpcInterface::MpcInterface(std::string name) :
   pubLeftWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/left_wheel/command", 10);
   pubArm_ = nh_.advertise<std_msgs::Float64MultiArray>("/mmrobot/multijoint_command", 10);
   subJointPosition_ = nh_.subscribe("/mmrobot/joint_states", 10, &MpcInterface::jointState_cb, this);
-  subConstraints_ = nh_.subscribe("/constraints", 10, &MpcInterface::constraints_cb, this);
+  subConstraints_base_ = nh_.subscribe("/constraints_base", 10, &MpcInterface::constraints_base_cb, this);
+  subConstraints_mid_ = nh_.subscribe("/constraints_mid", 10, &MpcInterface::constraints_mid_cb, this);
+  subConstraints_ee_ = nh_.subscribe("/constraints_ee", 10, &MpcInterface::constraints_ee_cb, this);
   curState_ = {0};
   curU_ = {0};
   problemSetup();
@@ -23,7 +25,7 @@ MpcInterface::~MpcInterface()
 void MpcInterface::problemSetup()
 {
   // w_x, w_o, w_q, w_u, w_qdot, w_slack
-  weightArray weights = {150.0, 10.0, 1.0, 0.5, 20.0, 0.0};
+  weightArray weights = {6.0, 0.5, 1.0, 0.5, 20.0, 1000.0};
   mpcProblem_.weights(weights);
   mpcProblem_.param(10, 0.08);
   mpcProblem_.param(11, 0.544);
@@ -65,10 +67,10 @@ void MpcInterface::jointState_cb(const sensor_msgs::JointState::ConstPtr& data)
   }
 }
 
-void MpcInterface::constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcInterface::constraints_base_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
 {
   //std::cout << "Receiving Constraints" << std::endl;
-  for (int i = 0; i < 15; ++i) {
+  for (int i = 0; i < NIPES; ++i) {
     mpcProblem_.infPlane(4 * i + 0, 0);
     mpcProblem_.infPlane(4 * i + 1, 0);
     mpcProblem_.infPlane(4 * i + 2, 1);
@@ -88,6 +90,42 @@ void MpcInterface::constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstP
   */
 }
 
+void MpcInterface::constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+{
+  int offset = 4 * NIPES;
+  for (int i = 0; i < NIPES; ++i) {
+    mpcProblem_.infPlane(4 * i + 0 + offset, 0);
+    mpcProblem_.infPlane(4 * i + 1 + offset, 0);
+    mpcProblem_.infPlane(4 * i + 2 + offset, 1);
+    mpcProblem_.infPlane(4 * i + 3 + offset, -10);
+  }
+  for (int i = 0; i < data->constraints.size() ; ++i)
+  {
+    mpcProblem_.infPlane(4 * i + 0 + offset, -1 * data->constraints[i].A[0]);
+    mpcProblem_.infPlane(4 * i + 1 + offset, -1 * data->constraints[i].A[1]);
+    mpcProblem_.infPlane(4 * i + 2 + offset, -1 * data->constraints[i].A[2]);
+    mpcProblem_.infPlane(4 * i + 3 + offset, -1 * data->constraints[i].b);
+  }
+}
+
+void MpcInterface::constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+{
+  int offset = 4 * NIPES * 2;
+  for (int i = 0; i < NIPES; ++i) {
+    mpcProblem_.infPlane(4 * i + 0 + offset, 0);
+    mpcProblem_.infPlane(4 * i + 1 + offset, 0);
+    mpcProblem_.infPlane(4 * i + 2 + offset, 1);
+    mpcProblem_.infPlane(4 * i + 3 + offset, -10);
+  }
+  for (int i = 0; i < data->constraints.size() ; ++i)
+  {
+    mpcProblem_.infPlane(4 * i + 0 + offset, -1 * data->constraints[i].A[0]);
+    mpcProblem_.infPlane(4 * i + 1 + offset, -1 * data->constraints[i].A[1]);
+    mpcProblem_.infPlane(4 * i + 2 + offset, -1 * data->constraints[i].A[2]);
+    mpcProblem_.infPlane(4 * i + 3 + offset, -1 * data->constraints[i].b);
+  }
+}
+
 void MpcInterface::setGoal(goalArray goal)
 {
   mpcProblem_.goal(goal);
@@ -103,11 +141,18 @@ void MpcInterface::setPlanes(planeArray planes)
   mpcProblem_.planes(planes);
 }
 
-void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeightArray errorWeights)
+void MpcInterface::setInfPlanes(infPlaneArray infPlanes)
+{
+  mpcProblem_.infPlanes(infPlanes);
+}
+
+void MpcInterface::parseProblem(goalArray goal, weightArray weights, errorWeightArray errorWeights, double safetyMargin)
 {
   mpcProblem_.goal(goal);
   mpcProblem_.weights(weights);
+  mpcProblem_.safetyMargin(safetyMargin);
   errorWeights_ = errorWeights;
+  
 }
   
 
@@ -127,6 +172,7 @@ curUArray MpcInterface::solve()
   mpcProblem_.curState(curState_);
   mpcSolver_.setupMPC(mpcProblem_);
   mpcSolver_.solveMPC();
+  int curExitFlag = mpcSolver_.getCurExitFlag();
   curUArray optCommands = mpcSolver_.getOptimalControl();
   //ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
   curU_[0] = optCommands[0];
@@ -168,6 +214,6 @@ double MpcInterface::computeError()
   for (i = 3; i < NX; ++i) {
     accum += errorWeights_[2] * pow((curState_[i] - g[i]), 2);
   }
-  ROS_INFO("Cur Error : %1.2f", sqrt(accum));
+  //ROS_INFO("Cur Error : %1.2f", sqrt(accum));
   return sqrt(accum);
 }

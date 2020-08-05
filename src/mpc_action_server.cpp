@@ -35,13 +35,20 @@ void MPCAction::parseProblem(const mobile_mpc::mpcGoalConstPtr &goal)
     i++;
   }
   maxError_ = goal->maxError.data;
+  safetyMargin_ = goal->safetyMargin.data;
 
-  mpcInterface_.parseProblem(goal_, weights_, errorWeights_);
+  mpcInterface_.parseProblem(goal_, weights_, errorWeights_, safetyMargin_);
 }
 
 void MPCAction::setCollisionAvoidance()
 {
     /*
+    obstacleArray oa = obstacleArray({1, -3, 2.1, 1});
+    mpcInterface_.setObstacles(oa);
+    infPlaneArray ipa = infPlaneArray({0, -1, 0,-2, 
+                                     0, 0, -1,-2, 
+                                     0, 0, -1,-2}); 
+    mpcInterface_.setInfPlanes(ipa);
     obstacleArray oa = obstacleArray({-1.5, -6, 0, 1, 
                                       -1.5, -6, 0, 1,
                                       -1.5, -6, 0, 1,

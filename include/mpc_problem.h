@@ -16,12 +16,13 @@
 #define SO          4   /* Size of obstacle data. */
 #define NPLANES     0   /* Number of planes. */
 #define SPLANES     9   /* Size of plane data. */
-#define NINFPLA     15  /* Number of planes. */
+#define NINFPLA     45   /* Number of planes. */
 #define SINFPLA     4   /* Size of plane data. */
+#define NIPES       15  /* Number of infPlanes for each spheres. */
 /* Number of online data values.
  * NC + NX + NW + NO * SO + NPLANES * SPLANES + NINFPLA * SINFPLA*/
-#define NP          78
-#define NPF         80  /* Number of forces parameters. NP + 2 */
+#define NP          198
+#define NPF         200  /* Number of forces parameters. NP + 2 */
 #define N           21  /* Number of intervals in the horizon. */
 #define TH          20  /* Time horizon. */
 
@@ -80,7 +81,9 @@ public:
   double slackVar();
   void slackVel(double);
   double slackVel();
+  void timeStep(double);
   double timeStep();
+  void safetyMargin(double);
   double safetyMargin();
   void obstacles(obstacleArray);
   obstacleArray obstacles();

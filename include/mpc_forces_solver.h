@@ -10,6 +10,7 @@ private:
   mm_MPC_output forces_output_;
   mm_MPC_info forces_info_;
   ForcesConverter converter_;
+  int exitFlag_;
 
 public:
   MpcForcesSolver();
@@ -17,6 +18,7 @@ public:
   void setupMPC(MpcProblem&);
   void solveMPC();
   curUArray getOptimalControl();
+  int getCurExitFlag();
   mm_MPC_params forces_params();
 };
 

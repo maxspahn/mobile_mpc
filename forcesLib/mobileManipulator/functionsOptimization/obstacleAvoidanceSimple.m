@@ -3,9 +3,9 @@ x = z(1:3);
 q = z(4:10);
 slack = z(11);
 nbPlanes = 0;
-nbInfPlanes = 15;
+nbInfPlanesEachSphere = 15;
 nbObstacles = 0;
-nbSpheres = 6;
+nbSpheres = 3;
 dimPlane = 9;
 dimInfPlane = 4;
 dimObstacle = 4;
@@ -13,7 +13,7 @@ safetyMargin = p(20);
 
 offsetObstacles = 21;
 indicesPlanes = offsetObstacles + [0, nbPlanes * dimPlane - 1];
-indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanes * dimInfPlane - 1];
+indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanesEachSphere * dimInfPlane * nbSpheres - 1];
 indicesObstacles = indicesInfPlanes(2) + 1 + [0, nbObstacles * dimObstacle - 1];
 
 planes = p(indicesPlanes(1): indicesPlanes(2));
@@ -21,7 +21,7 @@ infPlanes = p(indicesInfPlanes(1): indicesInfPlanes(2));
 obstacles = p(indicesObstacles(1): indicesObstacles(2));
     
     %spheres = p(20:23);
-    spheres = computeSpheres(q, x)';
+spheres = computeSpheres(q, x)';
 
 %     
 %     nbSpheres = size(spheres, 1);
@@ -40,15 +40,17 @@ obstacles = p(indicesObstacles(1): indicesObstacles(2));
         plane = planes(dimPlane * (i -1) + 1:dimPlane * (i - 1) + dimPlane);
         for j = 1:nbSpheres
             s = spheres(4 * (j - 1) + 1: 4 * (j - 1) + 4);
-            dist = point2line(s(1:3), plane);
+            dist = point2plane(s(1:3), plane);
             ineq = [ineq; dist - s(4) - safetyMargin + slack];
         end
     end
     
-    for i=1:nbInfPlanes
-        infPlane = infPlanes(dimInfPlane * (i - 1) + 1:dimInfPlane * (i -1 ) + dimInfPlane);
-        for j = 1:nbSpheres
-            s = spheres(4 * (j - 1) + 1:4 * (j -1) + 4);
+    n = nbInfPlanesEachSphere;
+    for j=1:nbSpheres
+        s = spheres(4 * (j - 1) + 1:4 * (j -1) + 4);
+        for i=1:n
+            offset = n * dimInfPlane * (j-1) + dimInfPlane * (i-1);
+            infPlane = infPlanes(offset + 1:offset + dimInfPlane);
             dist = point2infplane(s(1:3), infPlane);
             ineq = [ineq; dist - s(4) - safetyMargin + slack];
         end
@@ -110,7 +112,7 @@ function spheres = computeSpheres(q, x)
     s_ee = [Tee_s(1:3, 4)', ree];
     
     spheres = [s_base, s_0, s_2, s_3, s_4, s_ee];
-    %spheres = s_base;
+    spheres = [s_base, s_3, s_ee];
 end
 
 function Ts = forwardKinematicsExp(q, x)

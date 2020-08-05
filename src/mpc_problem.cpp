@@ -22,6 +22,23 @@ MpcProblem::~MpcProblem(){}
 
 void MpcProblem::initializeConstraints()
 {
+  for (int i = 0; i < NO; ++i) {
+    obstacles_[SO * i + 0] = 0;
+    obstacles_[SO * i + 1] = 0;
+    obstacles_[SO * i + 2] = 0;
+    obstacles_[SO * i + 3] = -100;
+  }
+  for (int i = 0; i < NPLANES; ++i) {
+    planes_[SPLANES * i + 0] = 0;
+    planes_[SPLANES * i + 1] = 0;
+    planes_[SPLANES * i + 2] = -50;
+    planes_[SPLANES * i + 3] = 0;
+    planes_[SPLANES * i + 4] = 5;
+    planes_[SPLANES * i + 5] = -50;
+    planes_[SPLANES * i + 6] = 5;
+    planes_[SPLANES * i + 7] = 0;
+    planes_[SPLANES * i + 8] = -50;
+  }
   for (int i = 0; i < NINFPLA; ++i) {
     infPlanes_[SINFPLA * i + 0] = 0.0;
     infPlanes_[SINFPLA * i + 1] = 0.0;
@@ -211,9 +228,19 @@ double MpcProblem::slackVel()
   return curU_[9];
 }
 
+void MpcProblem::timeStep(double ts)
+{
+  timeStep_ = ts;
+}
+
 double MpcProblem::timeStep()
 {
   return timeStep_;
+}
+
+void MpcProblem::safetyMargin(double sm)
+{
+  safetyMargin_ = sm;
 }
 
 double MpcProblem::safetyMargin()

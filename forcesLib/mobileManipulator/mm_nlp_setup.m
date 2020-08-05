@@ -48,14 +48,15 @@ rad2deg = @(rad) rad/pi*180; % convert radians into degrees
 %% Problem dimensions
 model.N = 20;                                       % horizon length
 nbObstacles = 0;
-nbSpheres = 6;                                          % base + 5 for the arm
+nbSpheres = 3;                                          % base + 5 for the arm
 nbSelfCollision = 0;
 nbPlanes = 0;
-nbInfPlanes = 15;
+nbInfPlanesEachSphere = 15;
+nbInfPlanes = nbInfPlanesEachSphere * nbSpheres;
 dimPlane = 9;
 dimInfPlane = 4;
 dimObstacle = 4;
-nbInequalities = (nbObstacles + nbPlanes + nbInfPlanes) * nbSpheres + nbSelfCollision; 
+nbInequalities = (nbObstacles + nbPlanes + nbInfPlanesEachSphere) * nbSpheres + nbSelfCollision; 
 model.nh = nbInequalities;   % number of inequality constraint functions
 
 if strcmp(dynamics, 'torques')
@@ -158,9 +159,9 @@ end
 
 %% Define solver options
 codeoptions = getOptions(solverName);
-codeoptions.maxit = 500;   % Maximum number of iterations
+codeoptions.maxit = 200;   % Maximum number of iterations
 codeoptions.printlevel = 0; % Use printlevel = 2 to print progress (but not for timings)
-codeoptions.optlevel = 2;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
+codeoptions.optlevel = 3;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
 codeoptions.timing = 1;
 codeoptions.overwrite = 1;
 codeoptions.mu0 = 20;
@@ -168,6 +169,15 @@ codeoptions.cleanup = 1;
 codeoptions.BuildSimulinkBlock = 0;
 codeoptions.nlp.lightCasadi = 0;
 codeoptions.threadSafeStorage = true;
+codeoptions.nlp.BarrStrat = 'loqo';
+codeoptions.nlp.checkFunctions = 1;
+%codeoptions.accuracy.ineq = 0.1;
+
+
+% Dumping the problem
+% codeoptions.dump_formulation = 1;
+% [stages, codeoptions, formulation] = FORCES_NLP(model, codeoptions);
+% tag = ForcesDumpFormulation(formulation, codeoptions);
 
 % codeoptions.nlp.integrator.type = 'ERK2';
 % codeoptions.nlp.integrator.Ts = 0.1;

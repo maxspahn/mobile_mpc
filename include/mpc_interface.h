@@ -24,12 +24,15 @@ public:
   void publishVelocities(curUArray vel);
   void publishZeroVelocities();
   void jointState_cb(const sensor_msgs::JointState::ConstPtr&);
-  void constraints_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
+  void constraints_base_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
+  void constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
+  void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void printState();
   void setGoal(goalArray);
   void setObstacles(obstacleArray);
   void setPlanes(planeArray);
-  void parseProblem(goalArray, weightArray, errorWeightArray);
+  void setInfPlanes(infPlaneArray);
+  void parseProblem(goalArray, weightArray, errorWeightArray, double);
   curUArray solve();
   void getState();
   double computeError();
@@ -43,7 +46,9 @@ private:
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;
   ros::Subscriber subJointPosition_;
-  ros::Subscriber subConstraints_;
+  ros::Subscriber subConstraints_base_;
+  ros::Subscriber subConstraints_mid_;
+  ros::Subscriber subConstraints_ee_;
   tf::TransformListener tfListener;
   curStateArray curState_;
   curUArray curU_;

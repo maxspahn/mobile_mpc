@@ -25,31 +25,25 @@ class Decomp
 private:
   ros::NodeHandle nh_;
   ros::Subscriber sCloud_;
-  //ros::Subscriber sLaserScan_;
   ros::Publisher poly_pub_;
   ros::Publisher es_pub_;
   ros::Publisher cloud_pub_;
-  ros::Publisher constraint_pub_;
-  ros::Publisher laserCloud_pub_;
-  ros::Publisher laserCloudT_pub_;
-  ros::ServiceClient assembler_client_;
+  std::vector<ros::Publisher> constraint_pub_;
   tf::TransformListener *tfListenerPtr_;
   //laser_geometry::LaserProjection projector_;
   ros::Rate r_;
-  sensor_msgs::PointCloud cameraCloud_;
-  sensor_msgs::PointCloud laserCloud_;
-  vec_Vec3f cameraObs_;
-  vec_Vec3f laserObs_;
+  sensor_msgs::PointCloud octoCloud_;
+  vec_Vec3f obs_;
 
 public:
   Decomp();
   void cloud_callback(sensor_msgs::PointCloud2ConstPtr const&);
   void runNode();
-  void cloud_to_vec(const sensor_msgs::PointCloud &cloud);
+  void cloud_to_vec(const sensor_msgs::PointCloud &);
+  sensor_msgs::PointCloud vec_to_cloud(const vec_Vec3f &pts);
   void decompose();
   void processLaserCloud();
-  vec_Vec3f join_obs();
-  Vec3f get_base_pos();
+  Vec3f get_link_pos(std::string);
   mm_msgs::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
 };
 
