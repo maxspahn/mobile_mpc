@@ -10,6 +10,7 @@ Decomp::Decomp() : r_(10) {
   constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_mid", 1, true));
   constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_ee", 1, true));
   tfListenerPtr_ = new tf::TransformListener();
+  nh_.getParam("/reference_frame", reference_frame_);
 }
 
 void Decomp::cloud_callback (sensor_msgs::PointCloud2ConstPtr const& cloud_msg){
@@ -28,7 +29,7 @@ void Decomp::cloud_to_vec(const sensor_msgs::PointCloud &cloud) {
   }
   //printf("Size points in pointcloud obs_ %d\n", obs_.size());
   sensor_msgs::PointCloud obs_msg = vec_to_cloud(obs_);
-  obs_msg.header.frame_id = std::string("odom");
+  obs_msg.header.frame_id = reference_frame_;
   cloud_pub_.publish(obs_msg);
   /*
   for (unsigned int i = 0; i < obs_.size(); ++i) {
@@ -51,7 +52,7 @@ sensor_msgs::PointCloud Decomp::vec_to_cloud(const vec_Vec3f &pts) {
 Vec3f Decomp::get_link_pos(std::string linkName) {
   Vec3f pos = Vec3f(0, 0, 0);
   tf::StampedTransform strans;
-  tfListenerPtr_->lookupTransform("odom", linkName, ros::Time(0), strans);
+  tfListenerPtr_->lookupTransform(reference_frame_, linkName, ros::Time(0), strans);
   tf::Vector3 posRos = strans.getOrigin();
   pos[0] = posRos[0];
   pos[1] = posRos[1];
@@ -61,10 +62,10 @@ Vec3f Decomp::get_link_pos(std::string linkName) {
 
 
 void Decomp::decompose() {
-  tfListenerPtr_->waitForTransform("/odom", "/depth_camera", ros::Time::now(), ros::Duration(1.0));
+  tfListenerPtr_->waitForTransform(reference_frame_, "/depth_camera", ros::Time::now(), ros::Duration(1.0));
   sensor_msgs::PointCloud cloud_transformed;
   if (octoCloud_.points.size() == 0) return;
-  tfListenerPtr_->transformPointCloud("odom", octoCloud_, cloud_transformed);
+  tfListenerPtr_->transformPointCloud(reference_frame_, octoCloud_, cloud_transformed);
   cloud_to_vec(cloud_transformed);
   vec_Vec3f seed_centers;
   seed_centers.push_back(get_link_pos("base_sphere"));
@@ -107,12 +108,12 @@ void Decomp::decompose() {
   }
 
   // Visualization
-  //cloud_transformed.header.frame_id = "odom";
+  //cloud_transformed.header.frame_id = reference_frame_;
   //cloud_pub_.publish(cloud_transformed);
   decomp_ros_msgs::PolyhedronArray poly_msg = DecompROS::polyhedron_array_to_ros(polys);
   decomp_ros_msgs::EllipsoidArray es_msg = DecompROS::ellipsoid_array_to_ros(es);
-  poly_msg.header.frame_id = "odom";
-  es_msg.header.frame_id = "odom";
+  poly_msg.header.frame_id = reference_frame_;
+  es_msg.header.frame_id = reference_frame_;
   poly_pub_.publish(poly_msg);
   es_pub_.publish(es_msg);
 

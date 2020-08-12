@@ -61,6 +61,7 @@ private:
   curUArray curU_;
   errorWeightArray errorWeights_;
   std::ofstream outputFile_;
+  std::string reference_frame_;
 };
 
 #endif /* MPC_INTERFACE_H */

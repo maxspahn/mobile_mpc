@@ -34,6 +34,7 @@ private:
   ros::Rate r_;
   sensor_msgs::PointCloud octoCloud_;
   vec_Vec3f obs_;
+  std::string reference_frame_;
 
 public:
   Decomp();
