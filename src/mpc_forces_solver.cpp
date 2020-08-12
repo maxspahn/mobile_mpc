@@ -39,7 +39,7 @@ void MpcForcesSolver::solveMPC(){
   for (int a = 0; a < 20; ++a) {
     printf("x0[%d] : %1.4f\n", a, forces_params.x0[a]);
   }
-  for (int b = 0; b < NPF; ++b) {
+  for (int b = 18; b < 260; ++b) {
     printf("all_params[%d] : %1.4f\n", b, forces_params.all_parameters[b]);
   }
   */
@@ -53,18 +53,31 @@ mm_MPC_params MpcForcesSolver::forces_params()
   return converter_.forces_params();
 }
 
+double MpcForcesSolver::getSolveTime()
+{
+  return forces_info_.solvetime;
+}
+
 int MpcForcesSolver::getCurExitFlag()
 {
   return exitFlag_;
 }
 
+int MpcForcesSolver::getNbIter()
+{
+  return forces_info_.it;
+}
+
 curUArray MpcForcesSolver::getOptimalControl()
 {
   curUArray optCommands;
-  if (exitFlag_ == -6) 
-    optCommands = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for (int i = 0; i < NU; ++i) {
     optCommands[i] = forces_output_.x02[i+NX+NS];
+  }
+  if (exitFlag_ == -6) {
+    for (int i = 0; i < NU; ++i) {
+      optCommands[i] *= 0.1;
+    }
   }
   return optCommands;
 }

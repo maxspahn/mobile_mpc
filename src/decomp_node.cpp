@@ -5,7 +5,8 @@ Decomp::Decomp() : r_(10) {
   poly_pub_ = nh_.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
   es_pub_ = nh_.advertise<decomp_ros_msgs::EllipsoidArray>("ellipsoid_array", 1, true);
   cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("obs_cloud", 1, true);
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_base", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_base1", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_base2", 1, true));
   constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_mid", 1, true));
   constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_ee", 1, true));
   tfListenerPtr_ = new tf::TransformListener();
@@ -65,11 +66,11 @@ void Decomp::decompose() {
   if (octoCloud_.points.size() == 0) return;
   tfListenerPtr_->transformPointCloud("odom", octoCloud_, cloud_transformed);
   cloud_to_vec(cloud_transformed);
-  Vec3f seed_center = get_link_pos("base_link");
   vec_Vec3f seed_centers;
-  seed_centers.push_back(get_link_pos("top_mount_bottom"));
-  seed_centers.push_back(get_link_pos("mmrobot_link4"));
-  seed_centers.push_back(get_link_pos("mmrobot_link6"));
+  seed_centers.push_back(get_link_pos("base_sphere"));
+  seed_centers.push_back(get_link_pos("base_sphere"));
+  seed_centers.push_back(get_link_pos("mmrobot_link2_sphere"));
+  seed_centers.push_back(get_link_pos("mmrobot_link7_sphere"));
   /*
   // Using path
   Vec3f wayPoint1 = get_link_pos("top_mount_bottom");
@@ -95,7 +96,7 @@ void Decomp::decompose() {
   // Using seeds
   vec_E<Ellipsoid3D> es;
   vec_E<Polyhedron3D> polys;
-  std::array<double, 3> sphere_sizes = {5.0, 1.0, 1.0};
+  std::array<double, 4> sphere_sizes = {5.0, 5.0, 5.0, 5.0};
   for (size_t i = 0; i < seed_centers.size(); ++i) {
     SeedDecomp3D decomp_util(seed_centers[i]);
     decomp_util.set_obs(obs_);
@@ -121,7 +122,7 @@ void Decomp::decompose() {
   //for(size_t i = 0; i < path.size() - 1; i++) {
   for(size_t i = 0; i < polys.size(); i++) {
     //const auto pt_inside = (path[i] + path[i+1]) / 2;
-    LinearConstraint3D cs(seed_center, polys[i].hyperplanes());
+    LinearConstraint3D cs(seed_centers[i], polys[i].hyperplanes());
     mm_msgs::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
     constraint_pub_[i].publish(constraints);
 /*

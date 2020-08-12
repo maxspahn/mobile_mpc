@@ -1,14 +1,18 @@
-function ineq = obstacleAvoidanceSimple(z, p)
+function ineq = obstacleAvoidanceSimple(z, p, collStruct)
 x = z(1:3);
 q = z(4:10);
 slack = z(11);
-nbPlanes = 0;
-nbInfPlanesEachSphere = 15;
-nbObstacles = 0;
-nbSpheres = 3;
-dimPlane = 9;
-dimInfPlane = 4;
-dimObstacle = 4;
+
+
+nbPlanes = collStruct.nbPlanes;
+nbInfPlanesEachSphere = collStruct.nbInfPlanesEachSphere;
+nbObstacles = collStruct.nbObstacles;
+nbSpheres = collStruct.nbSpheres;
+dimPlane = collStruct.dimPlane;
+dimInfPlane = collStruct.dimInfPlane;
+dimObstacle = collStruct.dimObstacle;
+
+
 safetyMargin = p(20);
 
 offsetObstacles = 21;
@@ -77,11 +81,17 @@ function spheres = computeSpheres(q, x)
     T7 = Ts(:,33:36);
     T8 = Ts(:,37:40);
     
-    hbase = [0.25 0 0.2];
-    rbase = 0.5;
+    hbase1 = [0.0 0 0.25];
+    rbase1 = 0.3;
 
-    Tbase_s = T_base * makeTF('translate', hbase);
-    s_base = [Tbase_s(1:3,4)', rbase];
+    Tbase_s1 = T_base * makeTF('translate', hbase1);
+    s_base1 = [Tbase_s1(1:3,4)', rbase1];
+    
+    hbase2 = [0.3 0 0.25];
+    rbase2 = 0.3;
+
+    Tbase_s2 = T_base * makeTF('translate', hbase2);
+    s_base2 = [Tbase_s2(1:3,4)', rbase2];
 
     %% link0
     l1 = [0 0 1.2 * 0.333/2];
@@ -92,7 +102,7 @@ function spheres = computeSpheres(q, x)
     %% link2
     l2 = [0 1.2 * -0.3160/2 0];
     T2_s = T_base * T0 * T1 * T2 * makeTF('translate', l2);
-    s_2 = [T2_s(1:3, 4)', -l2(2)];
+    s_2 = [T2_s(1:3, 4)', -1.2 * l2(2)];
 
 
     %% link 3
@@ -107,12 +117,12 @@ function spheres = computeSpheres(q, x)
 
 
     %% link EE
-    ree = 0.2;
+    ree = 0.3;
     Tee_s = T_base * T0 * T1 * T2 * T3 * T4 * T5 * T6 * T7 ;
     s_ee = [Tee_s(1:3, 4)', ree];
     
-    spheres = [s_base, s_0, s_2, s_3, s_4, s_ee];
-    spheres = [s_base, s_3, s_ee];
+    spheres = [s_base1, s_base2, s_0, s_2, s_3, s_4, s_ee];
+    spheres = [s_base1, s_base2, s_2, s_ee];
 end
 
 function Ts = forwardKinematicsExp(q, x)

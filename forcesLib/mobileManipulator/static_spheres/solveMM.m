@@ -4,9 +4,7 @@ clc;
 
 %% figure
 % fig1 = figure(1);
-% ax1 = axes('Parent', fig1, 'xlim', [-5, 5], 'ylim', [-5, 5], 'zlim', [0, 5]);
-% view(ax1, 3);
-% grid on;
+% ax1 = axes('Parent', fig1, 'xlim', [0, 100]);
 % hold(ax1, 'on');
 
 fig2 = figure(2);
@@ -25,7 +23,7 @@ base_pos = [0; 0; 0];
 arm_pos = [0; 0; 0; -1; 0; 1; 0];
 u_start = zeros(9, 1);
 start = [base_pos; arm_pos];
-goal_base_pos = [0; 0; 0];
+goal_base_pos = [5; 0; 0];
 goal_arm_pos = [1; 0; -1.5; -1.5; 0.5; 1; 0.2];
 
 goal = [goal_base_pos; goal_arm_pos];
@@ -33,55 +31,15 @@ goal = [goal_base_pos; goal_arm_pos];
 problem.xinit = [start; 0; u_start];
 problem.x0 = repmat([start; u_start; 0], H, 1);
 
-obstacles = ones(1 * 4, 1) * -100;
-planes = zeros(1 * 9, 1);
-%obstacles(1:4) = [1; -3; 2.1; 1];
-%obstacles(5:8) = [11; 10; 0; 2];
+obstacles = ones(20 * 4, 1) * -100;
+obstacles(1:4) = [1; -3; 2.1; 1];
+obstacles(5:8) = [2; 0.1; 0; 1];
 % obstacles(9:12) = [8; 7; 0; 0.1];
-line1 = [3, 15, 0, 12, 8, 0]';
-planes(1:9) = [-2.5, -2, 0, 2.5, -2, 0, -2.5, -2, 2]';
-planes(10:18) = [-2.5, -3, 0, 2.5, -3, 0, -2.5, -3, 2]';
-planes(19:27) = [6, -2, 0, 6, -7, 0, 6, -2, 2]';
-planes(28:36) = [5, -2, 0, 5, -7, 0, 5, -2, 2]';
-planes(37:45) = [-2, -5.5, 0, 0, -5.5, 0, -2, -5.5, 2]';
-planes(46:54) = [-2, -7.5, 0, 0, -7.5, 0, -2, -7.5, 2]';
-planes(55:63) = [-2, -5.5, 0, -2, -7.5, 0, -2, -5.5, 2]';
-planes(64:72) = [0, -5.5, 0, 0, -7.5, 0, 0, -5.5, 2]';
-planes = [-1.5, 5, 0, 1.5, 5, 0, -1.5, 5, 2]';
-planes = [0, 0, 5, 5, 0, 5, 0, 5, 5]';
-defaultInfPlane = [0, 0, 1, -3];
-infPlanes = repmat(defaultInfPlane', 45, 1);
-infPlanes(1:4) = [-1, -1, 0, -4]';
-infPlanes(5:8) = [-1, 0, 0, -4]';
-% infPlanes(9:12) = [0, 1, 0, -2]';
-% infPlanes(9:12) = [0.5, -1, 0, -6]';
-
-%planes = repmat(planes(1:36), 2, 1);
-%planes = repmat(planes(55:63), 8, 1);
-% planes(55:63) = planes(64:72);
-% planes(37:54) = planes(55:72);
-
-
-
-% plane2 = [-1, 0, 0, 11, 2, 0, 1]';
-% plane3 = [1, 0, 0, 0, 2, 0, 1]';
-% plane4 = [0, 1, 0, 5.5, 3, 0, 5.5]';
-%planes = [plane1; plane2; plane3; plane4];
-for i=1:1
-    [xp, yp, zp] = planeEquation(planes(9 * (i -1) + 1: 9 * (i -1) + 9));
-    plot(ax2, xp, yp);
-end
-for i = 1:3
-    [xp, yp, zp, np] = infPlaneEquation(infPlanes(4 * (i - 1) + 1: 4 * (i - 1) + 4));
-    plot(ax2, xp, yp);
-    plot(ax2, np(1,:), np(2,:), 'bx');
-end
-%plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
 weights = [1, 10, 1, 10000, 0, 10];
 safetyMargin = 0.5;
-for i=1:0
+for i=1:2
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end
 plot(goal_base_pos(1), goal_base_pos(2), 'rx');
@@ -98,20 +56,29 @@ r = 0.08;
 L = 0.544;
 
 %% Debugging
-params = repmat([dt, r, L, goal', weights, safetyMargin, infPlanes'], 1, H)';
-%params = repmat([dt, r, L, goal', weights, safetyMargin, obstacles'], 1, H)';
+params = repmat([dt, r, L, goal', weights, safetyMargin, obstacles'], 1, H)';
 problem.all_parameters = params;
-ineq = obstacleAvoidanceSimple(problem.xinit, params(1:200));
+collStruct.nbObstacles = 20;
+collStruct.nbSpheres = 3;
+collStruct.nbSelfCollision = 0;
+collStruct.nbPlanes = 0;
+collStruct.nbInfPlanesEachSphere = 0;
+collStruct.dimPlane = 9;
+collStruct.dimInfPlane = 4;
+collStruct.dimObstacle = 4;
+ineq = obstacleAvoidanceSimple(problem.xinit, params(1:200), collStruct);
 cost = costFunctionSimple(problem.xinit, params(1:200));
 
 curState = start;
 newState = start;
 error = 10000;
 t = 0;
+times = [];
 while 1
     [output, exitflag, info] = mm_MPC(problem);
     %ForcesDumpProblem(problem, tag);
     %disp(info.res_ineq);
+    times = [times, info.solvetime];
     disp(exitflag);
     curState = output.x02(1:10);
     curU = output.x01(12:13);

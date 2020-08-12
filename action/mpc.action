@@ -8,6 +8,7 @@ std_msgs/Float64 safetyMargin
 #result definition
 bool success
 std_msgs/Float64MultiArray finalState
+std_msgs/Duration executionTime
 ---
 #result feedback
 int32 errorFlag

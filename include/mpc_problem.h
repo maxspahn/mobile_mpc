@@ -4,28 +4,11 @@
 #include <array>
 #include <vector>
 
-//#include "mm_MPC.h"
-
-#define NC          2   /* Number of config parameters. */
-#define NX          10  /* Number of differential state variables.  */
-#define NS          1   /* Number of slack variables. */
-#define NW          6   /* Number of weights. */
-#define NU          10  /* Number of control inputs. */
-#define NUF         9   /* Number of control inputs for forces. */
-#define NO          0   /* Number of obstacles. */
-#define SO          4   /* Size of obstacle data. */
-#define NPLANES     0   /* Number of planes. */
-#define SPLANES     9   /* Size of plane data. */
-#define NINFPLA     45   /* Number of planes. */
-#define SINFPLA     4   /* Size of plane data. */
-#define NIPES       15  /* Number of infPlanes for each spheres. */
-/* Number of online data values.
- * NC + NX + NW + NO * SO + NPLANES * SPLANES + NINFPLA * SINFPLA*/
-#define NP          198
-#define NPF         200  /* Number of forces parameters. NP + 2 */
-#define N           21  /* Number of intervals in the horizon. */
-#define TH          20  /* Time horizon. */
-
+#if STATIC_MPC == 0
+  #include "definitions_mm_mpc.h"
+#else
+  #include "definitions_mm_mpc_static_spheres.h"
+#endif
 
 typedef std::array<double, NW> weightArray;
 typedef std::array<double, NX> goalArray;
@@ -86,6 +69,7 @@ public:
   void safetyMargin(double);
   double safetyMargin();
   void obstacles(obstacleArray);
+  void obstacles(int, obstacleArray);
   obstacleArray obstacles();
   double obstacle(int);
   void planes(planeArray);

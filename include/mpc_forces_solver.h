@@ -19,6 +19,8 @@ public:
   void solveMPC();
   curUArray getOptimalControl();
   int getCurExitFlag();
+  double getSolveTime();
+  int getNbIter();
   mm_MPC_params forces_params();
 };
 

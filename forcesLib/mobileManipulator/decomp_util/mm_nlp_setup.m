@@ -16,9 +16,9 @@ forcesPath = genpath(pathForces);
 casadiPath = genpath(pathCasadi);
 addpath(forcesPath);
 addpath(casadiPath);
-addpath('functionsOptimization');
-addpath('dyn_model_panda');
-addpath('distanceFunctions');
+addpath('../functionsOptimization');
+addpath('../dyn_model_panda');
+addpath('../distanceFunctions');
 
 % Turn off warnings for having a too recent Gcc compiler and some
 % SoapService
@@ -46,33 +46,39 @@ deg2rad = @(deg) deg/180*pi; % convert degrees into radians
 rad2deg = @(rad) rad/pi*180; % convert radians into degrees
 
 %% Problem dimensions
-model.N = 20;                                       % horizon length
-nbObstacles = 0;
-nbSpheres = 3;                                          % base + 5 for the arm
-nbSelfCollision = 0;
-nbPlanes = 0;
-nbInfPlanesEachSphere = 15;
-nbInfPlanes = nbInfPlanesEachSphere * nbSpheres;
-dimPlane = 9;
-dimInfPlane = 4;
-dimObstacle = 4;
-nbInequalities = (nbObstacles + nbPlanes + nbInfPlanesEachSphere) * nbSpheres + nbSelfCollision; 
+model.N = 20;                                           % horizon length
+collStruct.nbObstacles = 0;
+collStruct.nbSpheres = 4;
+collStruct.nbSelfCollision = 0;
+collStruct.nbPlanes = 0;
+collStruct.nbInfPlanesEachSphere = 15;
+collStruct.dimPlane = 9;
+collStruct.dimInfPlane = 4;
+collStruct.dimObstacle = 4;
+
+nbInfPlanes = collStruct.nbInfPlanesEachSphere * collStruct.nbSpheres;
+
+nbInequalities = (collStruct.nbObstacles + collStruct.nbPlanes + collStruct.nbInfPlanesEachSphere) * collStruct.nbSpheres +...
+    collStruct.nbSelfCollision; 
 model.nh = nbInequalities;   % number of inequality constraint functions
+n_other_param = 3 + 3 + 7 + 6 + 1 + ...
+    collStruct.dimObstacle * collStruct.nbObstacles +...
+    collStruct.dimPlane * collStruct.nbPlanes + ...
+    collStruct.dimInfPlane * nbInfPlanes;
+% [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
+
 
 if strcmp(dynamics, 'torques')
     model.nvar = 3 + 7 + 7 + 2 + 7;                     % number of variables [x, y, theta, q (size : 7), q_dot (size : 7), u1, u2, tau (size : 7)]
     model.neq= 3 + 7 + 7;                               % dimension of transition function
-    n_other_param = 3 + 3 + 7 + 6 + dimObstacle * nbObstacles;    % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), q_vel_des (size : 7), obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
     model.E = [eye(17, 17), zeros(17, 9)];
 elseif strcmp(dynamics, 'acc')
     model.nvar = 3 + 2 + 7 + 7 + 1 + 2 + 7;             % number of variables [x, y, theta, u1, u2, q (size : 7), q_dot (size : 7), slack, u1dot, u2dot, q_dotdot (size : 7)]
     model.neq= 3 + 2 + 7 + 7;                           % dimension of transition function
-    n_other_param = 3 + 3 + 7 + 8 + dimObstacle * nbObstacles;    % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
     model.E = [eye(19, 19), zeros(19, 10)];
 elseif strcmp(dynamics, 'simple')
     model.nvar = 3 + 7 + 1 + 2 + 7;                     % number of variables [x, y, theta, q (size : 7), slack, u1, u2, q_dot (size : 7)]
     model.neq= 3 + 7;                               % dimension of transition function
-    n_other_param = 3 + 3 + 7 + 6 + 1 + dimObstacle * nbObstacles + dimPlane * nbPlanes + dimInfPlane * nbInfPlanes;    % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
     model.E = [eye(10, 10), zeros(10, 10)];
 end
 model.npar =  n_other_param;          % number of parameters
@@ -116,7 +122,7 @@ for i=1:model.N
         %model.continous_dynamics = @continousDynamicsSimple;
     elseif strcmp(dynamics, 'simple')
         model.objective{i} = @(z, p) costFunctionSimple(z, p);
-        model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p);
+        model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p, collStruct);
         %model.continous_dynamics = @continousDynamicsSimple;
     end
     %% Upper/lower bounds For road boundaries

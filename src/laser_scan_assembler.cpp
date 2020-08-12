@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     srv.request.begin = ros::Time(0,0);
     srv.request.end   = ros::Time::now();
     if (client.call(srv))
-      printf("Got cloud with %u points\n", srv.response.cloud.points.size());
+      std::cout << "Got cloud with " << srv.response.cloud.points.size() << " points" << std::endl;
     else
       printf("Service call failed\n");
     ros::spinOnce();

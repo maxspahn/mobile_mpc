@@ -143,6 +143,13 @@ double MpcProblem::curState(int cI)
   return curState_[cI];
 }
 
+void MpcProblem::obstacles(int limit, obstacleArray o)
+{
+  for (unsigned int i = 0; i < limit; ++i) {
+    obstacles_[i] = o[i];
+  }
+}
+
 void MpcProblem::obstacles(obstacleArray o)
 {
   obstacles_ = o;
