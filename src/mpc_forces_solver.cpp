@@ -32,8 +32,20 @@ void MpcForcesSolver::setupMPC(MpcProblem& mp){
 
 void MpcForcesSolver::solveMPC(){
   mm_MPC_params forces_params = converter_.forces_params();
+  /*
+  for (int i = 0; i < 20; ++i) {
+    printf("xinit[%d] : %1.4f\n", i, forces_params.xinit[i]);
+  }
+  for (int a = 0; a < 20; ++a) {
+    printf("x0[%d] : %1.4f\n", a, forces_params.x0[a]);
+  }
+  for (int b = 18; b < 260; ++b) {
+    printf("all_params[%d] : %1.4f\n", b, forces_params.all_parameters[b]);
+  }
+  */
   int exitFlag = mm_MPC_solve(&forces_params, &forces_output_, &forces_info_, stdout, extfunc_eval);
-  printf("ExitFlag : %d\n", exitFlag);
+  exitFlag_ = exitFlag;
+  //printf("ExitFlag : %d\n", exitFlag);
 }
 
 mm_MPC_params MpcForcesSolver::forces_params()
@@ -41,11 +53,31 @@ mm_MPC_params MpcForcesSolver::forces_params()
   return converter_.forces_params();
 }
 
+double MpcForcesSolver::getSolveTime()
+{
+  return forces_info_.solvetime;
+}
+
+int MpcForcesSolver::getCurExitFlag()
+{
+  return exitFlag_;
+}
+
+int MpcForcesSolver::getNbIter()
+{
+  return forces_info_.it;
+}
+
 curUArray MpcForcesSolver::getOptimalControl()
 {
   curUArray optCommands;
   for (int i = 0; i < NU; ++i) {
     optCommands[i] = forces_output_.x02[i+NX+NS];
+  }
+  if (exitFlag_ == -6) {
+    for (int i = 0; i < NU; ++i) {
+      optCommands[i] *= 0.1;
+    }
   }
   return optCommands;
 }

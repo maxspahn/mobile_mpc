@@ -22,6 +22,8 @@ protected:
   weightArray weights_;
   errorWeightArray errorWeights_;
   double maxError_;
+  double safetyMargin_;
+  double timeStep_;
 
 public:
   MPCAction(std::string);

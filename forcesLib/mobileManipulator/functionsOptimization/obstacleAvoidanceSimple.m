@@ -1,24 +1,37 @@
-function ineq = obstacleAvoidanceSimple(z, p)
-    x = z(1:3);
-    q = z(4:10);
-    slack = z(11);
-    nbPlanes = 8;
-    dimPlane = 9;
-    safetyMargin = p(20);
+function ineq = obstacleAvoidanceSimple(z, p, collStruct)
+x = z(1:3);
+q = z(4:10);
+slack = z(11);
 
 
+nbPlanes = collStruct.nbPlanes;
+nbInfPlanesEachSphere = collStruct.nbInfPlanesEachSphere;
+nbObstacles = collStruct.nbObstacles;
+nbSpheres = collStruct.nbSpheres;
+dimPlane = collStruct.dimPlane;
+dimInfPlane = collStruct.dimInfPlane;
+dimObstacle = collStruct.dimObstacle;
+
+
+safetyMargin = p(20);
+
+offsetObstacles = 21;
+indicesPlanes = offsetObstacles + [0, nbPlanes * dimPlane - 1];
+indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanesEachSphere * dimInfPlane * nbSpheres - 1];
+indicesObstacles = indicesInfPlanes(2) + 1 + [0, nbObstacles * dimObstacle - 1];
+
+planes = p(indicesPlanes(1): indicesPlanes(2));
+infPlanes = p(indicesInfPlanes(1): indicesInfPlanes(2));
+obstacles = p(indicesObstacles(1): indicesObstacles(2));
+    
     %spheres = p(20:23);
-    spheres = computeSpheres(q, x)';
+spheres = computeSpheres(q, x)';
 
-    objects = p(21 + nbPlanes * dimPlane:end);
-    nbObstacles = size(objects, 1)/4;
-    nbSpheres = size(spheres, 1)/4;
-    planes = p(21: 21 + nbPlanes * dimPlane);
 %     
 %     nbSpheres = size(spheres, 1);
     ineq = [];
     for i=1:nbObstacles
-        o = objects(4 * (i - 1) + 1: 4 * (i - 1) + 4);
+        o = obstacles(4 * (i - 1) + 1: 4 * (i - 1) + 4);
         for j = 1:nbSpheres
             s = spheres(4 * (j - 1) + 1: 4 * (j - 1) + 4);
             dist = point2point(o(1:3), s(1:3));
@@ -31,7 +44,18 @@ function ineq = obstacleAvoidanceSimple(z, p)
         plane = planes(dimPlane * (i -1) + 1:dimPlane * (i - 1) + dimPlane);
         for j = 1:nbSpheres
             s = spheres(4 * (j - 1) + 1: 4 * (j - 1) + 4);
-            dist = point2line(s(1:3), plane);
+            dist = point2plane(s(1:3), plane);
+            ineq = [ineq; dist - s(4) - safetyMargin + slack];
+        end
+    end
+    
+    n = nbInfPlanesEachSphere;
+    for j=1:nbSpheres
+        s = spheres(4 * (j - 1) + 1:4 * (j -1) + 4);
+        for i=1:n
+            offset = n * dimInfPlane * (j-1) + dimInfPlane * (i-1);
+            infPlane = infPlanes(offset + 1:offset + dimInfPlane);
+            dist = point2infplane(s(1:3), infPlane);
             ineq = [ineq; dist - s(4) - safetyMargin + slack];
         end
     end
@@ -57,11 +81,17 @@ function spheres = computeSpheres(q, x)
     T7 = Ts(:,33:36);
     T8 = Ts(:,37:40);
     
-    hbase = [0.25 0 0.2];
-    rbase = 0.5;
+    hbase1 = [0.0 0 0.25];
+    rbase1 = 0.3;
 
-    Tbase_s = T_base * makeTF('translate', hbase);
-    s_base = [Tbase_s(1:3,4)', rbase];
+    Tbase_s1 = T_base * makeTF('translate', hbase1);
+    s_base1 = [Tbase_s1(1:3,4)', rbase1];
+    
+    hbase2 = [0.3 0 0.25];
+    rbase2 = 0.3;
+
+    Tbase_s2 = T_base * makeTF('translate', hbase2);
+    s_base2 = [Tbase_s2(1:3,4)', rbase2];
 
     %% link0
     l1 = [0 0 1.2 * 0.333/2];
@@ -72,7 +102,7 @@ function spheres = computeSpheres(q, x)
     %% link2
     l2 = [0 1.2 * -0.3160/2 0];
     T2_s = T_base * T0 * T1 * T2 * makeTF('translate', l2);
-    s_2 = [T2_s(1:3, 4)', -l2(2)];
+    s_2 = [T2_s(1:3, 4)', -1.2 * l2(2)];
 
 
     %% link 3
@@ -87,12 +117,12 @@ function spheres = computeSpheres(q, x)
 
 
     %% link EE
-    ree = 0.2;
+    ree = 0.3;
     Tee_s = T_base * T0 * T1 * T2 * T3 * T4 * T5 * T6 * T7 ;
     s_ee = [Tee_s(1:3, 4)', ree];
     
-    spheres = [s_base, s_0, s_2, s_3, s_4, s_ee];
-    %spheres = s_base;
+    spheres = [s_base1, s_base2, s_0, s_2, s_3, s_4, s_ee];
+    spheres = [s_base1, s_base2, s_2, s_ee];
 end
 
 function Ts = forwardKinematicsExp(q, x)

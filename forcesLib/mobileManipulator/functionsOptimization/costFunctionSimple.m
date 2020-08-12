@@ -19,6 +19,26 @@ wslack = p(17);
 wpu = p(18);
 wpqdot = p(19);
 
+%% check for inequalityConstraints
+% nbPlanes = 0;
+% nbInfPlanes = 3;
+% nbObstacles = 0;
+% nbSpheres = 6;
+% dimPlane = 9;
+% dimInfPlane = 6;
+% dimObstacle = 4;
+% safetyMargin = p(20);
+% 
+% offsetObstacles = 21;
+% indicesPlanes = offsetObstacles + [0, nbPlanes * dimPlane - 1];
+% indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanes * dimInfPlane - 1];
+% indicesObstacles = indicesInfPlanes(2) + 1 + [0, nbObstacles * dimObstacle - 1];
+% 
+% planes = p(indicesPlanes(1): indicesPlanes(2));
+% infPlanes = p(indicesInfPlanes(1): indicesInfPlanes(2));
+% obstacles = p(indicesObstacles(1): indicesObstacles(2));
+    
+
 
 Wq = diag(ones(size(q, 1), 1) * wq);
 Wx = diag(ones(size(x_des, 1), 1) * wx);

@@ -1,0 +1,17 @@
+<launch>
+  <!-- arg name="argument name" default="default_value"/-->
+
+  <node type="laser_scan_assembler" pkg="laser_assembler"
+        name="my_assembler">
+    <remap from="scan" to="/front/scan"/>
+    <param name="max_scans" type="int" value="1" />
+    <param name="fixed_frame" type="string" value="base_link" />
+  </node>
+  <node type="laser2pc.py" pkg="mobile_mpc" name="laser2pc"/>
+  <node name="remapping" pkg="topic_tools" type="relay" args="laser_pointcloud
+octomap_cloud_in"/>
+  <node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/>
+
+  <node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/>
+
+</launch>

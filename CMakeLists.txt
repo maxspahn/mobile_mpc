@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(mobile_mpc)
 
+## Switch between the static and dynamic mpc-formulation
+if(NOT DEFINED STATIC_MPC)
+  set(STATIC_MPC 0)
+endif(NOT DEFINED STATIC_MPC)
+
+MESSAGE(STATUS ${STATIC_MPC})
+
+add_definitions(-DSTATIC_MPC=${STATIC_MPC})
+
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -15,7 +24,10 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   sensor_msgs
   genmsg
+  mm_msgs
 )
+find_package(Eigen3 REQUIRED)
+find_package(decomp_util REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -51,11 +63,6 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -119,11 +126,18 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  acado/generated_mpc
-  acado/generated_mpc/qpoases/INCLUDE
-  forcesLib/mobileManipulator/mm_MPC/include
+  #acado/generated_mpc
+  #acado/generated_mpc/qpoases/INCLUDE
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${DECOMP_UTIL_INCLUDE_DIRS}
 )
+if(STATIC_MPC EQUAL 1)
+  include_directories(forcesLib/mobileManipulator/static_spheres/mm_MPC/include)
+else(STATIC_MPC EQUAL 1)
+  include_directories(forcesLib/mobileManipulator/decomp_util/mm_MPC/include)
+endif(STATIC_MPC EQUAL 1)
+  
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -139,63 +153,69 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/mobile_mpc_node.cpp)
-add_library(custom_acado
-  acado/generated_mpc/acado_auxiliary_functions.c
-  acado/generated_mpc/acado_hessian_regularization.c
-  acado/generated_mpc/acado_qpoases_interface.cpp
-  acado/generated_mpc/acado_solver.c
-  acado/generated_mpc/acado_integrator.c
-  acado/generated_mpc/qpoases/SRC/Bounds.cpp
-  acado/generated_mpc/qpoases/SRC/Constraints.cpp
-  acado/generated_mpc/qpoases/SRC/CyclingManager.cpp
-  acado/generated_mpc/qpoases/SRC/Indexlist.cpp
-  acado/generated_mpc/qpoases/SRC/MessageHandling.cpp
-  acado/generated_mpc/qpoases/SRC/MessageHandling.ipp
-  acado/generated_mpc/qpoases/SRC/QProblem.cpp
-  acado/generated_mpc/qpoases/SRC/QProblemB.cpp
-  acado/generated_mpc/qpoases/SRC/SubjectTo.cpp
-  acado/generated_mpc/qpoases/SRC/Utils.cpp
-  acado/generated_mpc/qpoases/SRC/EXTRAS/SolutionAnalysis.cpp
-)
-target_include_directories(custom_acado PUBLIC
-  acado/generated_mpc/qpoases/INCLUDE
-  acado/generated_mpc/qpoases/SRC
-  acado/generated_mpc/qpoases
-)
-target_link_libraries(custom_acado ${catkin_LIBRARIES})
+#add_library(custom_acado
+#  acado/generated_mpc/acado_auxiliary_functions.c
+#  acado/generated_mpc/acado_hessian_regularization.c
+#  acado/generated_mpc/acado_qpoases_interface.cpp
+#  acado/generated_mpc/acado_solver.c
+#  acado/generated_mpc/acado_integrator.c
+#  acado/generated_mpc/qpoases/SRC/Bounds.cpp
+#  acado/generated_mpc/qpoases/SRC/Constraints.cpp
+#  acado/generated_mpc/qpoases/SRC/CyclingManager.cpp
+#  acado/generated_mpc/qpoases/SRC/Indexlist.cpp
+#  acado/generated_mpc/qpoases/SRC/MessageHandling.cpp
+#  acado/generated_mpc/qpoases/SRC/MessageHandling.ipp
+#  acado/generated_mpc/qpoases/SRC/QProblem.cpp
+#  acado/generated_mpc/qpoases/SRC/QProblemB.cpp
+#  acado/generated_mpc/qpoases/SRC/SubjectTo.cpp
+#  acado/generated_mpc/qpoases/SRC/Utils.cpp
+#  acado/generated_mpc/qpoases/SRC/EXTRAS/SolutionAnalysis.cpp
+#)
+#target_include_directories(custom_acado PUBLIC
+#  acado/generated_mpc/qpoases/INCLUDE
+#  acado/generated_mpc/qpoases/SRC
+#  acado/generated_mpc/qpoases
+#)
+#target_link_libraries(custom_acado ${catkin_LIBRARIES})
 
-add_library(mpc_acado
-  src/mpc_acado.cpp
-)
+#add_library(mpc_acado
+#  src/mpc_acado.cpp
+#)
 ##target_include_directories(mpc_acado PUBLIC
 ##  acado/generated_mpc/qpoases/SRC
 ##  acado/generated_mpc/qpoases/INCLUDE
 ##)
-target_link_libraries(mpc_acado 
-  custom_acado
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(mpc_acado 
+#  custom_acado
+#  ${catkin_LIBRARIES}
+#)
 
-add_executable(mpc_acado_node src/mpc_node.cpp)
-target_link_libraries(mpc_acado_node
-  mpc_acado
-  ${catkin_LIBRARIES}
-)
+#add_executable(mpc_acado_node src/mpc_node.cpp)
+#target_link_libraries(mpc_acado_node
+#  mpc_acado
+#  ${catkin_LIBRARIES}
+#)
 
 add_library(mpc_lib
-  src/acado_converter.cpp
+#  src/acado_converter.cpp
   src/forces_converter.cpp
   src/mpc_problem.cpp
-  src/mpc_acado_solver.cpp
+#  src/mpc_acado_solver.cpp
   src/mpc_forces_solver.cpp
   src/mpc_interface.cpp
 )
-target_link_libraries(mpc_lib
-  custom_acado
-  mpc_acado
-  ${CMAKE_SOURCE_DIR}/forcesLib/mobileManipulator/mm_MPC/lib/libmm_MPC_withModel.so
-  ${catkin_LIBRARIES}
-)
+
+if(STATIC_MPC EQUAL 1)
+  target_link_libraries(mpc_lib
+    ${CMAKE_SOURCE_DIR}/forcesLib/mobileManipulator/static_spheres/mm_MPC/lib/libmm_MPC_withModel.so
+    ${catkin_LIBRARIES}
+  )
+else(STATIC_MPC EQUAL 1)
+  target_link_libraries(mpc_lib
+    ${CMAKE_SOURCE_DIR}/forcesLib/mobileManipulator/decomp_util/mm_MPC/lib/libmm_MPC_withModel.so
+    ${catkin_LIBRARIES}
+  )
+endif(STATIC_MPC EQUAL 1)
 
 add_executable(mpc_node_pro src/mpc_node_pro.cpp)
 target_link_libraries(mpc_node_pro
@@ -233,6 +253,27 @@ catkin_add_gtest(mpc_forces_solver_test test/mpc_forces_solver_test.cpp)
 target_link_libraries(mpc_forces_solver_test mpc_lib)
   
 
+#add_executable(decomp_test
+#  src/decomp.cpp
+#)
+#target_link_libraries(decomp_test
+#  ${catkin_LIBRARIES}
+#)
+
+add_executable(decomp_node
+  src/decomp_node.cpp
+)
+target_link_libraries(decomp_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(laserScan_assem
+  src/laser_scan_assembler.cpp
+)
+
+target_link_libraries(laserScan_assem
+  ${catkin_LIBRARIES}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

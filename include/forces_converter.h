@@ -13,6 +13,7 @@ private:
   int goalIndexOffset_;
   int obstaclesIndexOffset_;
   int planesIndexOffset_;
+  int infPlanesIndexOffset_;
   int configRobotOffset_;
   int safetyMarginIndexOffset_;
   int timeStepIndexOffset_;
