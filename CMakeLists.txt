@@ -153,48 +153,6 @@ endif(STATIC_MPC EQUAL 1)
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/mobile_mpc_node.cpp)
-#add_library(custom_acado
-#  acado/generated_mpc/acado_auxiliary_functions.c
-#  acado/generated_mpc/acado_hessian_regularization.c
-#  acado/generated_mpc/acado_qpoases_interface.cpp
-#  acado/generated_mpc/acado_solver.c
-#  acado/generated_mpc/acado_integrator.c
-#  acado/generated_mpc/qpoases/SRC/Bounds.cpp
-#  acado/generated_mpc/qpoases/SRC/Constraints.cpp
-#  acado/generated_mpc/qpoases/SRC/CyclingManager.cpp
-#  acado/generated_mpc/qpoases/SRC/Indexlist.cpp
-#  acado/generated_mpc/qpoases/SRC/MessageHandling.cpp
-#  acado/generated_mpc/qpoases/SRC/MessageHandling.ipp
-#  acado/generated_mpc/qpoases/SRC/QProblem.cpp
-#  acado/generated_mpc/qpoases/SRC/QProblemB.cpp
-#  acado/generated_mpc/qpoases/SRC/SubjectTo.cpp
-#  acado/generated_mpc/qpoases/SRC/Utils.cpp
-#  acado/generated_mpc/qpoases/SRC/EXTRAS/SolutionAnalysis.cpp
-#)
-#target_include_directories(custom_acado PUBLIC
-#  acado/generated_mpc/qpoases/INCLUDE
-#  acado/generated_mpc/qpoases/SRC
-#  acado/generated_mpc/qpoases
-#)
-#target_link_libraries(custom_acado ${catkin_LIBRARIES})
-
-#add_library(mpc_acado
-#  src/mpc_acado.cpp
-#)
-##target_include_directories(mpc_acado PUBLIC
-##  acado/generated_mpc/qpoases/SRC
-##  acado/generated_mpc/qpoases/INCLUDE
-##)
-#target_link_libraries(mpc_acado 
-#  custom_acado
-#  ${catkin_LIBRARIES}
-#)
-
-#add_executable(mpc_acado_node src/mpc_node.cpp)
-#target_link_libraries(mpc_acado_node
-#  mpc_acado
-#  ${catkin_LIBRARIES}
-#)
 
 add_library(mpc_lib
 #  src/acado_converter.cpp
@@ -217,12 +175,6 @@ else(STATIC_MPC EQUAL 1)
   )
 endif(STATIC_MPC EQUAL 1)
 
-add_executable(mpc_node_pro src/mpc_node_pro.cpp)
-target_link_libraries(mpc_node_pro
-  mpc_lib
-  ${catkin_LIBRARIES}
-)
-
 add_executable(mpc_server
   src/mpc_action_server.cpp
 )
@@ -231,34 +183,18 @@ target_link_libraries(mpc_server
   ${catkin_LIBRARIES}
 )
 
-##add_executable(mpc_client
-##  src/mpc_action_client.cpp
-##)
-##target_link_libraries(mpc_client
-##  mpc_lib
-##  ${catkin_LIBRARIES}
-##)
-
-
 ## testing
 catkin_add_gtest(mpc_problem_test test/mpc_problem_test.cpp)
 target_link_libraries(mpc_problem_test mpc_lib)
-catkin_add_gtest(acado_converter_test test/acado_converter_test.cpp)
-target_link_libraries(acado_converter_test mpc_lib)
+##catkin_add_gtest(acado_converter_test test/acado_converter_test.cpp)
+##target_link_libraries(acado_converter_test mpc_lib)
 catkin_add_gtest(forces_converter_test test/forces_converter_test.cpp)
 target_link_libraries(forces_converter_test mpc_lib)
-catkin_add_gtest(mpc_acado_solver_test test/mpc_acado_solver_test.cpp)
-target_link_libraries(mpc_acado_solver_test mpc_lib)
+#catkin_add_gtest(mpc_acado_solver_test test/mpc_acado_solver_test.cpp)
+#target_link_libraries(mpc_acado_solver_test mpc_lib)
 catkin_add_gtest(mpc_forces_solver_test test/mpc_forces_solver_test.cpp)
 target_link_libraries(mpc_forces_solver_test mpc_lib)
   
-
-#add_executable(decomp_test
-#  src/decomp.cpp
-#)
-#target_link_libraries(decomp_test
-#  ${catkin_LIBRARIES}
-#)
 
 add_executable(decomp_node
   src/decomp_node.cpp
@@ -274,76 +210,6 @@ add_executable(laserScan_assem
 target_link_libraries(laserScan_assem
   ${catkin_LIBRARIES}
 )
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
-#############
-## Install ##
-#############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mobile_mpc.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
 
 # Activate Debug mode
 # set(CMAKE_BUILD_TYPE Debug)

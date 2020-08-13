@@ -222,20 +222,22 @@ void MpcInterface::writeResultFile()
 void MpcInterface::getState()
 {
   tf::StampedTransform strans;
-  try {
-    tfListener.lookupTransform(reference_frame_, "base_link", ros::Time(0), strans);
-    tf::Matrix3x3 rotMatrixFast = strans.getBasis();
-    tf::Vector3 posBase = strans.getOrigin();
-    double roll, pitch, yaw;
-    rotMatrixFast.getRPY(roll, pitch, yaw);
-    curState_[0] = posBase[0];
-    curState_[1] = posBase[1];
-    curState_[2] = yaw;
-    
-  }
-  catch (tf::TransformException ex) {
-    ROS_INFO("ERROR IN INTERFACE WITH TF");
-    ROS_ERROR("%s", ex.what());
+  while (true) {
+    try {
+      tfListener.waitForTransform(reference_frame_, "base_link", ros::Time::now(), ros::Duration(1.0));
+      tfListener.lookupTransform(reference_frame_, "base_link", ros::Time(0), strans);
+      tf::Matrix3x3 rotMatrixFast = strans.getBasis();
+      tf::Vector3 posBase = strans.getOrigin();
+      double roll, pitch, yaw;
+      rotMatrixFast.getRPY(roll, pitch, yaw);
+      curState_[0] = posBase[0];
+      curState_[1] = posBase[1];
+      curState_[2] = yaw;
+      return;
+    }
+    catch (tf::TransformException ex) {
+      ROS_INFO("ERROR IN INTERFACE WITH TF");
+    }
   }
 }
 
