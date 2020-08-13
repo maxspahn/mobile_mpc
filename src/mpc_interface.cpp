@@ -17,6 +17,7 @@ MpcInterface::MpcInterface(std::string name) :
   curState_ = {0};
   curU_ = {0};
   problemSetup();
+  nh_.getParam("/reference_frame", reference_frame_);
 }
 
 MpcInterface::~MpcInterface()
@@ -222,7 +223,7 @@ void MpcInterface::getState()
 {
   tf::StampedTransform strans;
   try {
-    tfListener.lookupTransform("odom", "base_link", ros::Time(0), strans);
+    tfListener.lookupTransform(reference_frame_, "base_link", ros::Time(0), strans);
     tf::Matrix3x3 rotMatrixFast = strans.getBasis();
     tf::Vector3 posBase = strans.getOrigin();
     double roll, pitch, yaw;
@@ -233,6 +234,7 @@ void MpcInterface::getState()
     
   }
   catch (tf::TransformException ex) {
+    ROS_INFO("ERROR IN INTERFACE WITH TF");
     ROS_ERROR("%s", ex.what());
   }
 }
