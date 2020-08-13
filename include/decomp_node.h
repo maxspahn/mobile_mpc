@@ -46,6 +46,7 @@ public:
   void processLaserCloud();
   Vec3f get_link_pos(std::string);
   mm_msgs::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
+  void checkTfListener();
 };
 
 

@@ -11,6 +11,26 @@ Decomp::Decomp() : r_(10) {
   constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_ee", 1, true));
   tfListenerPtr_ = new tf::TransformListener();
   nh_.getParam("/reference_frame", reference_frame_);
+  checkTfListener();
+}
+
+void Decomp::checkTfListener() {
+  ROS_INFO("Cheking tf listener");
+  while(true) {
+    try {
+      tfListenerPtr_->waitForTransform(reference_frame_, "/base_link", ros::Time::now(), ros::Duration(1.0));
+      tf::StampedTransform strans;
+      tfListenerPtr_->lookupTransform(reference_frame_, "/base_link", ros::Time(0), strans);
+      break;
+    }
+    catch (tf2::LookupException e) {
+      ROS_WARN("You requested to use %s as the reference frame. It is not available. Consider to start a localization. 'odom' will used instead for now", reference_frame_.c_str());
+      reference_frame_ = "odom";
+    }
+    catch (tf2::ExtrapolationException e) {
+      ROS_INFO("Wating for tf to come up...");
+    }
+  }
 }
 
 void Decomp::cloud_callback (sensor_msgs::PointCloud2ConstPtr const& cloud_msg){
@@ -62,7 +82,6 @@ Vec3f Decomp::get_link_pos(std::string linkName) {
 
 
 void Decomp::decompose() {
-  tfListenerPtr_->waitForTransform(reference_frame_, "/depth_camera", ros::Time::now(), ros::Duration(1.0));
   sensor_msgs::PointCloud cloud_transformed;
   if (octoCloud_.points.size() == 0) return;
   tfListenerPtr_->transformPointCloud(reference_frame_, octoCloud_, cloud_transformed);

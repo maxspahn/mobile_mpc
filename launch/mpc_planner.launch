@@ -1,12 +1,14 @@
 <launch>
-  <!-- arg name="argument name" default="default_value"/-->
-  <arg name="reference_frame" default="odom"/>
+  
+  <arg name="param_file" default="$(find mobile_mpc)/config/default_params.yaml"/>
 
+
+  <rosparam file="$(arg param_file)"/>
+
+  <!-- arg name="argument name" default="default_value"/-->
   <include file="$(find mobile_navigation)/launch/octomap_mapping.launch">
     <arg name="map_file" value="$(find mpc_testing)/world/maps/obstacles_table.bt"/>
   </include>
-
-  <param name="reference_frame" value="$(arg reference_frame)"/>
 
   <node type="laser_scan_assembler" pkg="laser_assembler"
         name="my_assembler">

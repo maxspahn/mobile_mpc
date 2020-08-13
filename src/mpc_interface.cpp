@@ -234,6 +234,7 @@ void MpcInterface::getState()
     
   }
   catch (tf::TransformException ex) {
+    ROS_INFO("ERROR IN INTERFACE WITH TF");
     ROS_ERROR("%s", ex.what());
   }
 }
