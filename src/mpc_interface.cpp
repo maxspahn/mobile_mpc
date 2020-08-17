@@ -222,6 +222,7 @@ void MpcInterface::writeResultFile()
 void MpcInterface::getState()
 {
   tf::StampedTransform strans;
+  unsigned int counter = 0;
   while (true) {
     try {
       tfListener.waitForTransform(reference_frame_, "base_link", ros::Time::now(), ros::Duration(1.0));
@@ -236,7 +237,12 @@ void MpcInterface::getState()
       return;
     }
     catch (tf::TransformException ex) {
-      ROS_INFO("ERROR IN INTERFACE WITH TF");
+      counter = counter + 1;
+      if (counter > 5) {
+        ROS_WARN("You requested to use %s as the reference frame. It is not available. Consider to start a localization. 'odom' will used instead for now", reference_frame_.c_str());
+        ROS_WARN("%s", ex.what());
+        reference_frame_ = "odom";
+      }
     }
   }
 }
@@ -274,5 +280,6 @@ double MpcInterface::computeError()
     accum += e;
   }
   ROS_INFO("Max Error of %1.3f at %d\n", maxError, maxErrorIndex);
-  return sqrt(accum);
+  double curError = sqrt(accum);
+  return curError;
 }
