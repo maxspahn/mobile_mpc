@@ -1,4 +1,4 @@
-image: empty_world_map.pgm
+image: mpc_test_world.pgm
 resolution: 0.020000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0

@@ -16,6 +16,7 @@ Decomp::Decomp() : r_(10) {
 
 void Decomp::checkTfListener() {
   ROS_INFO("Cheking tf listener");
+  unsigned int counter = 0;
   while(true) {
     try {
       tfListenerPtr_->waitForTransform(reference_frame_, "/base_link", ros::Time::now(), ros::Duration(1.0));
@@ -23,9 +24,16 @@ void Decomp::checkTfListener() {
       tfListenerPtr_->lookupTransform(reference_frame_, "/base_link", ros::Time(0), strans);
       break;
     }
+    catch (tf2::ConnectivityException e) {
+      counter++;
+    }
     catch (tf2::LookupException e) {
-      ROS_WARN("You requested to use %s as the reference frame. It is not available. Consider to start a localization. 'odom' will used instead for now", reference_frame_.c_str());
-      reference_frame_ = "odom";
+      counter = counter + 1;
+      if (counter > 10) {
+        ROS_WARN("You requested to use %s as the reference frame. It is not available. Consider to start a localization. 'odom' will used instead for now", reference_frame_.c_str());
+        ROS_WARN("%s", e.what());
+        reference_frame_ = "odom";
+      }
     }
     catch (tf2::ExtrapolationException e) {
       ROS_INFO("Wating for tf to come up...");

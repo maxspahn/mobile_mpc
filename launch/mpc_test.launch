@@ -13,7 +13,7 @@
 
   <param name="sphere_store_description"
     command="$(find xacro)/xacro --inorder 
-      '$(find mobile_mpc)/world/simplest_world.urdf.xacro'"/>
+      '$(find mobile_mpc)/world/mpc_test_world.urdf.xacro'"/>
 
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param sphere_store_description -urdf -model sphereStore"/>
 

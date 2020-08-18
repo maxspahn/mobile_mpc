@@ -38,11 +38,13 @@ TEST_F(ForcesConverterTest, testParamSetupInfPlanes)
   converter_.setupParams(mpcProblem_);
   forcesParamArray p = converter_.params();
   EXPECT_EQ(p.size(), NPF);
-  EXPECT_THAT(p[20], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(p[21], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(p[22], DoubleNear(1.0, EPSILON));
-  EXPECT_THAT(p[23], DoubleNear(-5.0, EPSILON));
-  EXPECT_THAT(p[23 + (NINFPLA-1) * SINFPLA], DoubleNear(-5.0, EPSILON));
+  int infPlaneOffset = NC + NX + NW + 2 + NO * SO + NPLANES * SPLANES;
+  for (int i = 0; i < NINFPLA; ++i) {
+    EXPECT_THAT(p[infPlaneOffset + i * SINFPLA + 0], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(p[infPlaneOffset + i * SINFPLA + 1], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(p[infPlaneOffset + i * SINFPLA + 2], DoubleNear(1.0, EPSILON));
+    EXPECT_THAT(p[infPlaneOffset + i * SINFPLA + 3], DoubleNear(-5.0, EPSILON));
+  }
 }
 
 TEST_F(ForcesConverterTest, paramsConfig)
@@ -97,14 +99,13 @@ TEST_F(ForcesConverterTest, paramsInfPlanes)
   converter_.setupParams(mpcProblem_);
   converter_.setForcesVariables(mpcProblem_);
   mm_MPC_params mp = converter_.forces_params();
-  EXPECT_THAT(mp.all_parameters[20], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[21], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[22], DoubleNear(1.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[23], DoubleNear(-5.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[23 + (NINFPLA-1) * SINFPLA], DoubleNear(-5.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[2 * NPF + 21], DoubleNear(0.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[4 * NPF + 22], DoubleNear(1.0, EPSILON));
-  EXPECT_THAT(mp.all_parameters[7 * NPF + 23], DoubleNear(-5.0, EPSILON));
+  int infPlaneOffset = NC + NX + NW + 2 + NO * SO + NPLANES * SPLANES;
+  for (int i = 0; i < NINFPLA; ++i) {
+    EXPECT_THAT(mp.all_parameters[infPlaneOffset + i * SINFPLA + 0], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(mp.all_parameters[infPlaneOffset + i * SINFPLA + 1], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(mp.all_parameters[infPlaneOffset + i * SINFPLA + 2], DoubleNear(1.0, EPSILON));
+    EXPECT_THAT(mp.all_parameters[infPlaneOffset + i * SINFPLA + 3], DoubleNear(-5.0, EPSILON));
+  }
 }
 
 TEST_F(ForcesConverterTest, testVariablesSetXinit)
