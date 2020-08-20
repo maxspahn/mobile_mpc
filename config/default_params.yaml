@@ -5,10 +5,10 @@ timeStep: 0.5
 rate: 2.0
 navigation:
   safetyMargin: 0.05
-  maxError: 0.2
+  maxError: 0.1
   #arm, pos, orientation, slack, u, q_dot
   weights: [0.5, 10.0, 0.5, 10000000.0, 0.4, 10.0]
-  errorWeights: [1.0, 1.0, 1.0]
+  errorWeights: [0.5, 0.5, 0.5]
 fineMotion:
   safetyMargin: 0.01
   maxError: 0.1
@@ -16,7 +16,7 @@ fineMotion:
   errorWeights: [1.0, 1.0, 1.0]
 armMotion:
   # Negative safetyMargin to allow the gripper to get close to the table, sort of a hack
-  safetyMargin: -0.2
-  maxError: 0.01
-  weights: [1.0, 0.0, 0.0, 10000000.0, 10000000.0, 10.0]
-  errorWeights: [0.0, 0.0, 1.0]
+  safetyMargin: -0.8
+  maxError: 0.1
+  weights: [1.0, 0.0, 0.0, 10000000.0, 10000000.0, 5.0]
+  errorWeights: [0.0, 0.0, 10.0]

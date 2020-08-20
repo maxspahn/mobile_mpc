@@ -76,7 +76,7 @@ curUArray MpcForcesSolver::getOptimalControl()
   }
   if (exitFlag_ == -6) {
     for (int i = 0; i < NU; ++i) {
-      optCommands[i] *= 0.1;
+      optCommands[i] *= 0.9;
     }
   }
   return optCommands;
