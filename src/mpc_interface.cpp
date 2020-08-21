@@ -1,7 +1,7 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  mpcProblem_(0.5, 0.20),
+  mpcProblem_(0.25, 0.20),
   mpcSolver_(),
   name_(name)
 {

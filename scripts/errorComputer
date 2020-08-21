@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+import rospy
+import numpy as np
+import tf
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+from std_msgs.msg import Float64, Float64MultiArray
+from sensor_msgs.msg import JointState
+from mm_msgs.msg import ActiveInferenceGoal
+
+
+class mpcErrorPublisher(object):
+    def __init__(self):
+        rospy.init_node("errorComputationMPC")
+        self.rate = rospy.Rate(10)
+        self.pub = rospy.Publisher('/mpcError', Float64, queue_size=10)
+        self.subGoal_ = rospy.Subscriber('/curAIgoal', ActiveInferenceGoal, self.goal_cb)
+        self.subOdom = rospy.Subscriber(
+            "/mmrobot/ground_truth_odom", Odometry, self.odom_cb
+        )
+        self.subJointPosition = rospy.Subscriber(
+            "/mmrobot/joint_states", JointState, self.jointState_cb
+        )
+        self.curState = np.zeros(10)
+        self.motionType = 0
+        self.targetConfig = np.zeros(10)
+
+    def odom_cb(self, odometry):
+        curPos = np.array(
+            [odometry.pose.pose.position.x, odometry.pose.pose.position.y]
+        )
+        curQuat = odometry.pose.pose.orientation
+        quaternion = (curQuat.x, curQuat.y, curQuat.z, curQuat.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        curOri = np.array([euler[2]])
+        self.curState[0:3] = np.concatenate((curPos, curOri))
+
+    def jointState_cb(self, jointStates):
+        self.curState[3:10] = np.array(jointStates.position[3:10])
+
+    def goal_cb(self, goalData):
+        rospy.loginfo(goalData)
+        self.targetConfig = goalData.targetConfig.data
+        self.motionType = goalData.motionType
+
+    def computeError(self):
+        rospy.loginfo(self.motionType)
+        if self.motionType == 1:
+            prefix = "fineMotion"
+        elif self.motionType == 2:
+            prefix = "armMotion"
+        else:
+            prefix = "navigation"
+        errorWeights = rospy.get_param(prefix + "/errorWeights");
+        accum = 0.0
+        for i in range(2):
+            e = errorWeights[0] * (self.curState[i] - self.targetConfig[i]) ** 2
+            accum = accum + e
+        e = errorWeights[1] * (self.curState[2] - self.targetConfig[2]) ** 2
+        accum = accum + e
+        for i in range(3, 10):
+            e = errorWeights[2] * (self.curState[i] - self.targetConfig[i]) ** 2
+            accum = accum + e
+        return np.sqrt(accum)
+
+    def run(self):
+        while not rospy.is_shutdown():
+            self.curError = self.computeError()
+            self.pub.publish(self.curError)
+            self.rate.sleep()
+
+
+if __name__ == "__main__":
+    myMPCErrorPublisher = mpcErrorPublisher()
+    myMPCErrorPublisher.run()
