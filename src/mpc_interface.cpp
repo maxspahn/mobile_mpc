@@ -4,7 +4,8 @@ MpcInterface::MpcInterface(std::string name) :
   // time step and (safety margin)
   mpcProblem_(0.5, 0.20),
   mpcSolver_(),
-  name_(name)
+  name_(name),
+  curExitFlag_(0)
 {
   pubRightWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/right_wheel/command", 10);
   pubLeftWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/left_wheel/command", 10);
@@ -203,7 +204,7 @@ curUArray MpcInterface::solve()
   solveTime.data = mpcSolver_.getSolveTime();
   pubSolveTime_.publish(solveTime);
   writeResultFile();
-  int curExitFlag = mpcSolver_.getCurExitFlag();
+  curExitFlag_ = mpcSolver_.getCurExitFlag();
   
   curUArray optCommands = mpcSolver_.getOptimalControl();
   //ROS_INFO("U_opt : %1.2f, %1.2f", optCommands[0], optCommands[1]);
@@ -211,6 +212,11 @@ curUArray MpcInterface::solve()
   curU_[1] = optCommands[1];
   curU_[9] = optCommands[9];
   return optCommands;
+}
+
+int MpcInterface::getCurExitFlag()
+{
+  return curExitFlag_;
 }
 
 void MpcInterface::writeResultFile() 

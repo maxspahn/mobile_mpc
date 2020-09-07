@@ -113,6 +113,7 @@ void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
   {
     ROS_INFO("Cur error %1.5f\n", mpcInterface_.computeError());
     curUArray u_opt = mpcInterface_.solve();
+    feedback_.errorFlag = mpcInterface_.getCurExitFlag();
     rate_.sleep();
     mpcInterface_.publishVelocities(u_opt);
     if (as_.isPreemptRequested() || !ros::ok())

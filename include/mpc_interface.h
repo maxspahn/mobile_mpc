@@ -41,6 +41,7 @@ public:
   double computeError();
   void writeResultFile();
   double getRate();
+  int getCurExitFlag();
 
 private:
   MpcProblem mpcProblem_;
@@ -62,6 +63,7 @@ private:
   errorWeightArray errorWeights_;
   std::ofstream outputFile_;
   std::string reference_frame_;
+  int curExitFlag_;
 };
 
 #endif /* MPC_INTERFACE_H */
