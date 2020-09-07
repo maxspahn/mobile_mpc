@@ -90,11 +90,12 @@ q_lim_franka_low = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.897
 q_lim_franka_vel = [2.1750, 2.1750, 2.1750, 2.1750, 2.6100, 2.6100, 2.6100];
 q_lim_franka_torque = [87, 87, 87, 87, 12, 12, 12];
 q_lim_franka_acc = [15, 7.5, 10, 12.5, 15, 20, 20];
-wheel_lim_vel = 5;
+wheel_lim_vel = 2;
 wheel_lim_acc = 25;
 slack_lim_low = 0;
 slack_lim_up = inf;
 velocity_safety = 0.8;
+wheel_lim_back = -2;
 
 % [x, y, theta, q u1, u2];
 if strcmp(dynamics, 'torques')
@@ -104,7 +105,7 @@ elseif strcmp(dynamics, 'acc')
     lower_bound = [-inf, -inf, -inf, -wheel_lim_vel, -wheel_lim_vel, q_lim_franka_low, -q_lim_franka_vel, slack_lim_low, -wheel_lim_acc, -wheel_lim_acc, -q_lim_franka_acc];
     upper_bound = [inf, inf, inf, wheel_lim_vel, wheel_lim_vel, q_lim_franka_up, q_lim_franka_vel, slack_lim_up, wheel_lim_acc, wheel_lim_acc, q_lim_franka_acc];
 elseif strcmp(dynamics, 'simple')
-    lower_bound = [-inf, -inf, -inf, q_lim_franka_low, slack_lim_low, -wheel_lim_vel, -wheel_lim_vel, -q_lim_franka_vel];
+    lower_bound = [-inf, -inf, -inf, q_lim_franka_low, slack_lim_low, wheel_lim_back, wheel_lim_back, -q_lim_franka_vel];
     upper_bound = [inf, inf, inf, q_lim_franka_up, slack_lim_up, wheel_lim_vel, wheel_lim_vel, q_lim_franka_vel];
 end
 model.lb = velocity_safety * lower_bound;

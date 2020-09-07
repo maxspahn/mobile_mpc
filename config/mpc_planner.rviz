@@ -235,6 +235,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        mmrobot_ee:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         mmrobot_hand:
           Alpha: 1
           Show Axes: false
@@ -423,7 +427,7 @@ Visualization Manager:
           Value: false
         lift_link:
           Value: false
-        map:
+        mmrobot_ee:
           Value: true
         mmrobot_hand:
           Value: false
@@ -485,68 +489,69 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            base_link:
-              base_footprint:
+        odom:
+          base_link:
+            base_footprint:
+              {}
+            base_sphere:
+              {}
+            chassis_link:
+              internal_link:
                 {}
-              base_sphere:
+              lift_link:
+                top_mount_bottom:
+                  extrusion1:
+                    top_mount:
+                      mmrobot_link0:
+                        mmrobot_link1:
+                          mmrobot_link2:
+                            mmrobot_link2_sphere:
+                              {}
+                            mmrobot_link3:
+                              mmrobot_link4:
+                                mmrobot_link5:
+                                  mmrobot_link6:
+                                    mmrobot_link7:
+                                      mmrobot_link7_sphere:
+                                        {}
+                                      mmrobot_link8:
+                                        mmrobot_hand:
+                                          mmrobot_ee:
+                                            {}
+                                          mmrobot_leftfinger:
+                                            {}
+                                          mmrobot_rightfinger:
+                                            {}
+                      top_camera:
+                        depth_camera:
+                          {}
+                  extrusion2:
+                    {}
+                  extrusion3:
+                    {}
+                  extrusion4:
+                    {}
+              rotacastor_left_link:
                 {}
-              chassis_link:
-                internal_link:
-                  {}
-                lift_link:
-                  top_mount_bottom:
-                    extrusion1:
-                      top_mount:
-                        mmrobot_link0:
-                          mmrobot_link1:
-                            mmrobot_link2:
-                              mmrobot_link2_sphere:
-                                {}
-                              mmrobot_link3:
-                                mmrobot_link4:
-                                  mmrobot_link5:
-                                    mmrobot_link6:
-                                      mmrobot_link7:
-                                        mmrobot_link7_sphere:
-                                          {}
-                                        mmrobot_link8:
-                                          mmrobot_hand:
-                                            mmrobot_leftfinger:
-                                              {}
-                                            mmrobot_rightfinger:
-                                              {}
-                        top_camera:
-                          depth_camera:
-                            {}
-                    extrusion2:
-                      {}
-                    extrusion3:
-                      {}
-                    extrusion4:
-                      {}
-                rotacastor_left_link:
-                  {}
-                rotacastor_right_link:
-                  {}
-                wheel_left_link:
-                  {}
-                wheel_right_link:
-                  {}
-              front_laser:
+              rotacastor_right_link:
                 {}
-              imu_link:
+              wheel_left_link:
                 {}
-              rear_left_sonar_link:
+              wheel_right_link:
                 {}
-              rear_right_sonar_link:
+            front_laser:
+              {}
+            imu_link:
+              {}
+            rear_left_sonar_link:
+              {}
+            rear_right_sonar_link:
+              {}
+            stereo:
+              stereo_left:
                 {}
-              stereo:
-                stereo_left:
-                  {}
-                stereo_right:
-                  {}
+              stereo_right:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
@@ -631,7 +636,7 @@ Visualization Manager:
   Global Options:
     Background Color: 255; 255; 255
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:

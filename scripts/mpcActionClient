@@ -23,18 +23,10 @@ def mpc_client():
     client.wait_for_server()
 
     # Creates a goal to send to the action server.
-    errorWeights = Float64MultiArray()
-    errorWeights.data = np.array([1.0, 1.0, 1.0])
-    safetyMargin = Float64()
-    safetyMargin.data = 0.5
-    safetyMargin = Float64()
-    safetyMargin.data = 0.1
-    myMaxError = Float64()
-    myMaxError.data = 0.2
-    myMPCWeights = Float64MultiArray()
-    # wq, wx, wo, wslack, wpu, wpqdot
-    myMPCWeights.data = np.array([0.5, 7, 0.5, 2000, 0.15, 10])
-    #myMPCWeights.data = np.array([100, 5, 5, 0.5, 10, 1000000000])
+    safetyMargin = rospy.get_param("/fineMotion/safetyMargin")
+    myMaxError = rospy.get_param("/maxError")
+    errorWeights = rospy.get_param("/fineMotion/errorWeights")
+    myMPCWeights = rospy.get_param("/fineMotion/weights")
     goals = []
     goalData0 = Float64MultiArray()
     goalData0.data = np.array([0, 0, 0, 0.5, -0.5, 1.0, -1, 0, 2.1, 0])

@@ -16,9 +16,7 @@ class mpcErrorPublisher(object):
         self.rate = rospy.Rate(10)
         self.pub = rospy.Publisher('/mpcError', Float64, queue_size=10)
         self.subGoal_ = rospy.Subscriber('/curAIgoal', ActiveInferenceGoal, self.goal_cb)
-        self.subOdom = rospy.Subscriber(
-            "/mmrobot/ground_truth_odom", Odometry, self.odom_cb
-        )
+        self.transformer = tf.TransformListener()
         self.subJointPosition = rospy.Subscriber(
             "/mmrobot/joint_states", JointState, self.jointState_cb
         )
@@ -26,15 +24,17 @@ class mpcErrorPublisher(object):
         self.motionType = 0
         self.targetConfig = np.zeros(10)
 
-    def odom_cb(self, odometry):
-        curPos = np.array(
-            [odometry.pose.pose.position.x, odometry.pose.pose.position.y]
-        )
-        curQuat = odometry.pose.pose.orientation
-        quaternion = (curQuat.x, curQuat.y, curQuat.z, curQuat.w)
-        euler = tf.transformations.euler_from_quaternion(quaternion)
-        curOri = np.array([euler[2]])
-        self.curState[0:3] = np.concatenate((curPos, curOri))
+    def getBaseState(self):
+        while (True):
+            try:
+                (pos, quat) = self.transformer.lookupTransform("/map", "/chassis_link", rospy.Time(0))
+                break
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+        self.curState[0] = pos[0]
+        self.curState[1] = pos[1]
+        euler = tf.transformations.euler_from_quaternion(quat)
+        self.curState[2] = euler[2]
 
     def jointState_cb(self, jointStates):
         self.curState[3:10] = np.array(jointStates.position[3:10])
@@ -45,6 +45,7 @@ class mpcErrorPublisher(object):
         self.motionType = goalData.motionType
 
     def computeError(self):
+        self.getBaseState()
         rospy.loginfo(self.motionType)
         if self.motionType == 1:
             prefix = "fineMotion"

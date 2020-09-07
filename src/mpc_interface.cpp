@@ -1,7 +1,8 @@
 #include "mpc_interface.h"
 
 MpcInterface::MpcInterface(std::string name) :
-  mpcProblem_(0.25, 0.20),
+  // time step and (safety margin)
+  mpcProblem_(0.5, 0.20),
   mpcSolver_(),
   name_(name)
 {
@@ -214,7 +215,7 @@ curUArray MpcInterface::solve()
 
 void MpcInterface::writeResultFile() 
 {
-  outputFile_.open("/home/mspahn/test.txt", std::ios_base::app);
+  outputFile_.open("/home/mspahn/catkin_clean/src/mpc_testing/results/solver_times.txt", std::ios_base::app);
   outputFile_ << mpcSolver_.getCurExitFlag() << " ; " << mpcSolver_.getNbIter() << " ; " << mpcSolver_.getSolveTime() << "\n";
   outputFile_.close();
 }

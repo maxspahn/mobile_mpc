@@ -12,20 +12,19 @@ clc;
 fig2 = figure(2);
 set(fig2, 'Position', get(0, 'Screensize'));
 set(fig2, 'WindowStyle', 'docked');
-ax2 = axes('Parent', fig2, 'xlim', [-5, 5]);
-axis equal
+ax2 = axes('Parent', fig2, 'xlim', [-5, 5], 'ylim', [-5, 5]);
 hold(ax2, 'on');
 
 
 %%
 H = 20;
 
-dt = 0.5;
-base_pos = [0; 0; 0];
+dt = 5.0;
+base_pos = [0; 0; 2.5];
 arm_pos = [0; 0; 0; -1; 0; 1; 0];
 u_start = zeros(9, 1);
 start = [base_pos; arm_pos];
-goal_base_pos = [5; 0; 0];
+goal_base_pos = [7; -4; 0];
 goal_arm_pos = [1; 0; -1.5; -1.5; 0.5; 1; 0.2];
 
 goal = [goal_base_pos; goal_arm_pos];
@@ -79,7 +78,7 @@ end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
-weights = [1, 10, 1, 10000, 0, 10];
+weights = [1, 1, 0.2, 10000, 0.5, 10];
 safetyMargin = 0.5;
 for i=1:0
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
@@ -122,12 +121,20 @@ while 1
     %disp(info.res_ineq);
     disp(exitflag);
     curState = output.x02(1:10);
+    fn = fieldnames(output);
+    fss = zeros(17, 2);
+    for i=3:numel(fn)
+        if (isnumeric(output.(fn{i})))
+            futureState = output.(fn{i});
+            fss(i-2, :) = futureState(1:2);
+        end
+    end
+    
     curU = output.x01(12:13);
     slack = output.x02(11);
     disp(slack);
     problem.xinit = output.x02;
-    problem.x0 = [output.x01;
-        output.x02;...
+    problem.x0 = [output.x02;...
         output.x03;...
         output.x04;...
         output.x05;...
@@ -138,11 +145,22 @@ while 1
         output.x10;...
         output.x11;...
         output.x12;...
-        output.x12];
-    problem.x0 = repmat(output.x01, H, 1);
+        output.x13;...
+        output.x14;...
+        output.x15;...
+        output.x16;...
+        output.x17;...
+        output.x18;...
+        output.x19;...
+        output.x20;...
+        output.x20];
+    %problem.x0 = repmat(output.x01, H, 1);
     
     
     plot(ax2, curState(1), curState(2), 'ro');
+    for i = 1:17
+        plot(ax2, fss(i,1), fss(i,2), 'bx');
+    end
     pause(0.1);
     
     oldError = error;
@@ -152,6 +170,8 @@ while 1
         break;
     end
     t = t + dt;
+    curU
+    curState
   
 end
 

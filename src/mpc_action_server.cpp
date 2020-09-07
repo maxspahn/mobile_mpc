@@ -4,7 +4,8 @@ MPCAction::MPCAction(std::string name) :
   as_(nh_, name, boost::bind(&MPCAction::executeCB, this, _1), false),
   action_name_(name),
   mpcInterface_(name),
-  rate_(4.0)
+  // must be set according to timeStep in mpc_interface
+  rate_(2.0)
 {
   as_.start();
   setCollisionAvoidance();

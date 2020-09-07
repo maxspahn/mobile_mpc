@@ -1,30 +1,23 @@
 <launch>
   
   <arg name="param_file" default="$(find mobile_mpc)/config/default_params.yaml"/>
+  <arg name="octomap_file" default="$(find mobile_navigation)/maps/mockup_store.bt"/>
 
 
   <rosparam file="$(arg param_file)"/>
 
   <!-- arg name="argument name" default="default_value"/-->
-  <include file="$(find mobile_navigation)/launch/octomap_mapping.launch">
-  </include>
+  <!--include file="$(find mobile_navigation)/launch/octomap_mapping.launch">
+    <arg name="map_file" value="$(arg octomap_file)"/>
+  </include-->
 
-  <node type="laser_scan_assembler" pkg="laser_assembler"
-        name="my_assembler">
-    <remap from="scan" to="/front/scan"/>
-    <param name="max_scans" type="int" value="1" />
-    <param name="fixed_frame" type="string" value="base_link" />
-  </node>
-  <node type="laser2pc.py" pkg="mobile_mpc" name="laser2pc"/>
-  <node name="remapping" pkg="topic_tools" type="relay" args="laser_pointcloud
-octomap_cloud_in"/>
 
   <node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/>
 
   <node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/>
-  <node name="errorComputer" pkg="mobile_mpc" type="errorComputer" />
+  <!--node name="errorComputer" pkg="mobile_mpc" type="errorComputer" /-->
 
-  <node name="rviz" type="rviz" pkg="rviz"
-    args="-d $(find mobile_mpc)/config/mpc_planner.rviz"/>
+  <!--node name="rviz" type="rviz" pkg="rviz"
+    args="-d $(find mobile_mpc)/config/mpc_planner.rviz"/-->
 
 </launch>
