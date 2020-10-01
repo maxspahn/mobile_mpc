@@ -2,6 +2,10 @@ close all;
 clear;
 clc;
 
+addpath('../functionsOptimization');
+addpath('../dyn_model_panda');
+addpath('../distanceFunctions');
+
 %% figure
 % fig1 = figure(1);
 % ax1 = axes('Parent', fig1, 'xlim', [-5, 5], 'ylim', [-5, 5], 'zlim', [0, 5]);
@@ -19,12 +23,12 @@ hold(ax2, 'on');
 %%
 H = 20;
 
-dt = 5.0;
+dt = 2.5;
 base_pos = [0; 0; 2.5];
 arm_pos = [0; 0; 0; -1; 0; 1; 0];
 u_start = zeros(9, 1);
 start = [base_pos; arm_pos];
-goal_base_pos = [7; -4; 0];
+goal_base_pos = [0; -4; 0];
 goal_arm_pos = [1; 0; -1.5; -1.5; 0.5; 1; 0.2];
 
 goal = [goal_base_pos; goal_arm_pos];
@@ -33,6 +37,7 @@ problem.xinit = [start; 0; u_start];
 problem.x0 = repmat([start; u_start; 0], H, 1);
 
 obstacles = ones(20 * 4, 1) * -100;
+movingObstacles = ones(1 * 7, 1) * -100;
 planes = zeros(1 * 9, 1);
 %obstacles(1:4) = [1; -3; 2.1; 1];
 %obstacles(5:8) = [11; 10; 0; 2];
@@ -78,7 +83,7 @@ end
 %plot(ax2, [line1(1); line1(4)], [line1(2); line1(5)]);
 
 % wq, wx, wo, wslack, wpu, wpqdot, 
-weights = [1, 1, 0.2, 10000, 0.5, 10];
+weights = [1, 1, 0.0, 10000, 0.5, 10];
 safetyMargin = 0.5;
 for i=1:0
     rectangle('Parent', ax2, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
@@ -97,30 +102,40 @@ r = 0.08;
 L = 0.544;
 
 %% Debugging
-params = repmat([dt, r, L, goal', weights, safetyMargin, infPlanes'], 1, H)';
+param = [dt, r, L, goal', weights, safetyMargin, infPlanes', movingObstacles'];
+params = repmat(param, 1, H)';
 %params = repmat([dt, r, L, goal', weights, safetyMargin, obstacles'], 1, H)';
 problem.all_parameters = params;
-collStruct.nbObstacles = 20;
+collStruct.nbObstacles = 0;
 collStruct.nbSpheres = 3;
 collStruct.nbSelfCollision = 0;
 collStruct.nbPlanes = 0;
-collStruct.nbInfPlanesEachSphere = 0;
+collStruct.nbInfPlanesEachSphere = 20;
 collStruct.dimPlane = 9;
 collStruct.dimInfPlane = 4;
 collStruct.dimObstacle = 4;
-ineq = obstacleAvoidanceSimple(problem.xinit, params(1:200), collStruct);
-cost = costFunctionSimple(problem.xinit, params(1:200));
+collStruct.dimMovingObstacle = 7;
+collStruct.nbMovingObstacles = 1;
+% ineq = obstacleAvoidanceSimple(problem.xinit, param', collStruct, 1);
+% cost = costFunctionSimple(problem.xinit, param');
 
 curState = start;
 newState = start;
 error = 10000;
 t = 0;
-while 1
+while t < 200
+    movingObstacles = [sin(t/20) * 1.5 - 1.50, -2, 0, cos(t/20) * 1.5, 0, 0, 0.5]';
+    param = [dt, r, L, goal', weights, safetyMargin, infPlanes', movingObstacles'];
+    ineq = obstacleAvoidanceSimple(problem.xinit, param', collStruct, 1);
+    plot(ax2, movingObstacles(1), movingObstacles(2), 'gx');
+    problem.all_parameters = params;
+    params = repmat(param, 1, H)';
     [output, exitflag, info] = mm_MPC(problem);
     %ForcesDumpProblem(problem, tag);
     %disp(info.res_ineq);
     disp(exitflag);
-    curState = output.x02(1:10);
+    disp(info.solvetime);
+    curState = output.x01(1:10);
     fn = fieldnames(output);
     fss = zeros(17, 2);
     for i=3:numel(fn)
@@ -131,10 +146,10 @@ while 1
     end
     
     curU = output.x01(12:13);
-    slack = output.x02(11);
-    disp(slack);
+    slack = output.x01(11);
     problem.xinit = output.x02;
-    problem.x0 = [output.x02;...
+    problem.x0 = [output.x01;...
+        output.x02;...
         output.x03;...
         output.x04;...
         output.x05;...
@@ -152,7 +167,6 @@ while 1
         output.x17;...
         output.x18;...
         output.x19;...
-        output.x20;...
         output.x20];
     %problem.x0 = repmat(output.x01, H, 1);
     
@@ -164,14 +178,12 @@ while 1
     pause(0.1);
     
     oldError = error;
-    error = norm(curState - goal);
+    error = norm([curState(1:2); curState(4:end)] - [goal(1:2); goal(4:end)]);
     %disp(error);
     if error < 0.1 || oldError <= 0.1 * error
         break;
     end
     t = t + dt;
-    curU
-    curState
   
 end
 

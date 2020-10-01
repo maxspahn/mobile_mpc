@@ -18,7 +18,7 @@ addpath(forcesPath);
 addpath(casadiPath);
 addpath('../functionsOptimization');
 addpath('../dyn_model_panda');
-addpath('../distanceFunctions');
+addpath('../../distanceFunctions');
 
 % Turn off warnings for having a too recent Gcc compiler and some
 % SoapService
@@ -48,6 +48,8 @@ rad2deg = @(rad) rad/pi*180; % convert radians into degrees
 %% Problem dimensions
 model.N = 20;                                           % horizon length
 collStruct.nbObstacles = 0;
+collStruct.nbMovingObstacles = 1;
+collStruct.dimMovingObstacle = 7;
 collStruct.nbSpheres = 4;
 collStruct.nbSelfCollision = 0;
 collStruct.nbPlanes = 0;
@@ -58,13 +60,14 @@ collStruct.dimObstacle = 4;
 
 nbInfPlanes = collStruct.nbInfPlanesEachSphere * collStruct.nbSpheres;
 
-nbInequalities = (collStruct.nbObstacles + collStruct.nbPlanes + collStruct.nbInfPlanesEachSphere) * collStruct.nbSpheres +...
+nbInequalities = (collStruct.nbObstacles + collStruct.nbPlanes + collStruct.nbInfPlanesEachSphere + collStruct.nbMovingObstacles) * collStruct.nbSpheres +...
     collStruct.nbSelfCollision; 
 model.nh = nbInequalities;   % number of inequality constraint functions
 n_other_param = 3 + 3 + 7 + 6 + 1 + ...
     collStruct.dimObstacle * collStruct.nbObstacles +...
     collStruct.dimPlane * collStruct.nbPlanes + ...
-    collStruct.dimInfPlane * nbInfPlanes;
+    collStruct.dimInfPlane * nbInfPlanes + ...
+    collStruct.dimMovingObstacle * collStruct.nbMovingObstacles;
 % [dt, r, L, x_des, y_des, theta_des, q_des (size : 7), weights, obstacles(1).x, obstacles(1).y, obstacle(3), obsctacles(1).r, ...]
 
 
@@ -123,7 +126,7 @@ for i=1:model.N
         %model.continous_dynamics = @continousDynamicsSimple;
     elseif strcmp(dynamics, 'simple')
         model.objective{i} = @(z, p) costFunctionSimple(z, p);
-        model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p, collStruct);
+        model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p, collStruct, i);
         %model.continous_dynamics = @continousDynamicsSimple;
     end
     %% Upper/lower bounds For road boundaries
