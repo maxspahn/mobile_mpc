@@ -27,9 +27,10 @@ function x_dot = continuousDynamics(x, u)
     %L = 0.544;
     L = 0.494;
     % Compute velocities around origin (point in between wheels
-    angVel = r/(2*L) * (-u_base(1) + u_base(2));
-    xVel = r/2 * (u_base(1) + u_base(2)) * cos(x_base(3));
-    yVel =  r/2 * (u_base(1) + u_base(2)) * sin(x_base(3));
+    linearVel = 0.5 * (u_base(1) + u_base(2)) * r;
+    angVel = r/L * (-u_base(1) + u_base(2));
+    xVel = linearVel * cos(x_base(3));
+    yVel =  linearVel * sin(x_base(3));
     % Transform to center of base
     x_base_dot = [xVel - angVel * offsetBase * sin(x_base(3));...
         yVel + angVel * offsetBase * cos(x_base(3));...

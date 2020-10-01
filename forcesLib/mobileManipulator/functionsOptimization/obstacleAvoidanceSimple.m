@@ -1,4 +1,4 @@
-function ineq = obstacleAvoidanceSimple(z, p, collStruct)
+function ineq = obstacleAvoidanceSimple(z, p, collStruct, timeStep)
 x = z(1:3);
 q = z(4:10);
 slack = z(11);
@@ -8,9 +8,12 @@ nbPlanes = collStruct.nbPlanes;
 nbInfPlanesEachSphere = collStruct.nbInfPlanesEachSphere;
 nbObstacles = collStruct.nbObstacles;
 nbSpheres = collStruct.nbSpheres;
+nbMovingObstacles = collStruct.nbMovingObstacles;
 dimPlane = collStruct.dimPlane;
 dimInfPlane = collStruct.dimInfPlane;
 dimObstacle = collStruct.dimObstacle;
+dimMovingObstacle = collStruct.dimMovingObstacle;
+
 
 
 safetyMargin = p(20);
@@ -19,10 +22,12 @@ offsetObstacles = 21;
 indicesPlanes = offsetObstacles + [0, nbPlanes * dimPlane - 1];
 indicesInfPlanes = indicesPlanes(2) + 1 + [0, nbInfPlanesEachSphere * dimInfPlane * nbSpheres - 1];
 indicesObstacles = indicesInfPlanes(2) + 1 + [0, nbObstacles * dimObstacle - 1];
+indicesMovingObstacles = indicesObstacles(2) + 1 + [0, nbMovingObstacles * dimMovingObstacle - 1];
 
 planes = p(indicesPlanes(1): indicesPlanes(2));
 infPlanes = p(indicesInfPlanes(1): indicesInfPlanes(2));
 obstacles = p(indicesObstacles(1): indicesObstacles(2));
+movingObstacles = p(indicesMovingObstacles(1): indicesMovingObstacles(2));
     
     %spheres = p(20:23);
 spheres = computeSpheres(q, x)';
@@ -59,6 +64,17 @@ spheres = computeSpheres(q, x)';
             ineq = [ineq; dist - s(4) - safetyMargin + slack];
         end
     end
+    
+    for j=1:nbSpheres
+        s = spheres(4 * (j - 1) + 1:4 * (j - 1) + 4);
+        for i=1:nbMovingObstacles
+            o = movingObstacles(dimMovingObstacle * (i -1) + 1: dimMovingObstacle * i);
+            expectedPosition = o(1:3) + o(4:6) * timeStep;
+            dist = point2point(expectedPosition(1:3), s(1:3));
+            ineq = [ineq; dist - s(4) - o(7) - safetyMargin + slack];
+        end
+    end
+            
     
     % Self Collision Avoidance between end effector and base
 %     ee = nbSpheres - 1;
