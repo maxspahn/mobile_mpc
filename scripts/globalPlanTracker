@@ -1,0 +1,178 @@
+#!/usr/bin/env python
+
+import rospy
+import numpy as np
+
+from nav_msgs.msg import Path
+from std_msgs.msg import Bool, Float64MultiArray
+from mm_msgs.msg import NurbsEval2D
+from std_msgs.msg import Duration, Time
+from geometry_msgs.msg import Pose2D
+
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+from geomdl import BSpline
+from geomdl import utilities
+from geomdl import operations
+from geomdl.visualization import VisMPL
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+class PlanTracker(object):
+    def __init__(self):
+        rospy.init_node("planTracker")
+        self.rate = rospy.Rate(10)
+        self.plotSub_ = rospy.Subscriber("/spline/plot", Bool, self.plot_cb)
+        self.planSub_ = rospy.Subscriber("/move_base/NavfnROS/plan", Path,  self.path_cb)
+        self.evalPub_ = rospy.Publisher(
+            "/spline/globalPath", NurbsEval2D, queue_size=10
+        )
+        self.curve = BSpline.Curve()
+        self.curve.degree = 3
+        self.curve.delta = 0.01
+        self.curve.vis = VisMPL.VisCurve2D()
+        self.startTime = rospy.get_time()
+        self.endTime = rospy.get_time()
+        self.maxSpeed = 0.5
+        self.dt = 2.0
+        self.duration = 1.0
+        self.havingPlan = False
+        #self.defaultPlan()
+        self.curParameter = 0.0
+
+    def plot_cb(self, data):
+        print(self.startTime)
+        print(self.endTime)
+        print(rospy.Time.now())
+        t = (rospy.Time.now() - self.startTime) / (self.endTime - self.startTime)
+        print(t)
+        a = self.curve.evaluate_single(t)
+        print(a)
+        # self.curve.render()
+        self.plotSpline(t)
+
+    def plotSpline(self, evalTime):
+        ctrlpts = np.array(self.curve.ctrlpts)
+        curvepts = np.array(self.curve.evalpts)
+        a = self.curve.evaluate_single(evalTime)
+
+        # Convert tangent list into a NumPy array
+        # ctarr = np.array(curvetan)
+
+        # Plot using Matplotlib
+        plt.figure(figsize=(10.67, 8), dpi=96)
+        #yaxis = plt.plot((-1, 25), (0, 0), "k-")  # y-axis line
+        (cppolygon,) = plt.plot(
+            ctrlpts[:, 0],
+            ctrlpts[:, 1],
+            color="black",
+            linestyle="-.",
+            marker="o",
+            markersize="3",
+        )  # control points polygon
+        (curveplt,) = plt.plot(
+            curvepts[:, 0], curvepts[:, 1], color="green", linestyle="-"
+        )  # evaluated curve points
+        plt.plot(a[0], a[1], "ro")
+        # tanline = plt.quiver(ctarr[:, 0, 0], ctarr[:, 0, 1], ctarr[:, 1, 0], ctarr[:, 1, 1], color='blue', angles='xy', scale_units='xy', scale=1, width=0.003)  # tangents
+        # tanlinekey = plt.quiverkey(tanline, 23.75, -14.5, 35, "Tangent Vectors", coordinates='data', labelpos='W')
+        #plt.legend([cppolygon, curveplt], ["Control Points", "Evaluated Curve"])
+        plt.axis([-5, 5, -5, 5])
+        plt.show()
+
+    def defaultPlan(self):
+        rospy.loginfo("Setting default spline")
+        self.startTime = rospy.Time.now()
+        self.duration = 100.0
+        self.endTime = self.startTime + rospy.Duration(self.duration)
+        self.curve.ctrlpts = [[0.0, 0.0], [0.2, 0.0], [0.4, 0.0], [0.6, 0.0], [0.8, 0.0], [1.0, 0.0]]
+        self.curve.knotvector = utilities.generate_knot_vector(
+            self.curve.degree, len(self.curve.ctrlpts)
+        )
+        self.havingPlan = True
+        print(self.startTime)
+        print(self.endTime)
+
+    def path_cb(self, path):
+        rospy.loginfo("Received Path")
+        plan = path
+        pts = []
+        distance = 0
+        if (len(plan.poses) == 0):
+            rospy.WARN("RECEIVED PATH IS EMPTY: CANNOT GENERATE NURBS SPLINE")
+            rospy.WARN("No global path evalution is published!")
+            return
+        o = plan.poses[-1].pose.orientation
+        ol = [o.x, o.y, o.z, o.w]
+        (roll, pitch, yaw) = euler_from_quaternion(ol)
+        self.finalOri = yaw
+        self.startTime = plan.poses[0].header.stamp
+        for i in range(1, len(plan.poses)):
+            distance = distance + self.distance(plan.poses[i], plan.poses[i-1])
+            pts.append([plan.poses[i].pose.position.x, plan.poses[i].pose.position.y])
+        if len(pts) > self.curve.degree + 3:
+            self.curve.ctrlpts = pts
+            self.curve.knotvector = utilities.generate_knot_vector(
+                self.curve.degree, len(self.curve.ctrlpts)
+            )
+            self.duration = distance/self.maxSpeed
+            rospy.loginfo("Predicted duration : %1.2f", self.duration)
+            self.endTime = self.startTime + rospy.Duration(self.duration)
+            self.havingPlan = True
+            print(self.endTime)
+        else:
+            rospy.loginfo("Received path to short. Keeping old one")
+
+    def distance(self, a, b):
+        posA = np.array([a.pose.position.x, a.pose.position.y])
+        posB = np.array([b.pose.position.x, b.pose.position.y])
+        return np.linalg.norm(posA - posB)
+
+    def publishTimedPlan(self):
+        deltaParameter = self.dt / self.duration
+        curTime = rospy.Time.now()
+        self.curParameter = (curTime.to_sec() - self.startTime.to_sec()) / self.duration
+        evalNurbs = NurbsEval2D()
+        for i in range(rospy.get_param("/mpc/timeHorizon")):
+            evalTime = np.min([self.curParameter + i * deltaParameter, 1.0])
+            nurbsPoint = self.curve.evaluate_single(evalTime)
+            if (evalTime < 0.99):
+                tan = operations.tangent(self.curve, evalTime, normalize=True)
+                theta = np.arctan2(tan[1][1], tan[1][0])
+                '''
+                if (theta < -np.pi/2):
+                    theta = theta + np.pi
+                elif (theta > np.pi/2):
+                    theta = theta - np.pi
+                '''
+            else:
+                tan = operations.tangent(self.curve, 0.99, normalize=True)
+                theta = np.arctan2(tan[1][1], tan[1][0])
+                '''
+                if (theta < -np.pi/2):
+                    theta = theta + np.pi
+                elif (theta > np.pi/2):
+                    theta = theta - np.pi
+                '''
+                #theta = self.finalOri
+            p2d = Pose2D()
+            p2d.x = nurbsPoint[0]
+            p2d.y = nurbsPoint[1]
+            p2d.theta = theta
+            evalNurbs.evaluations.append(p2d)
+        self.evalPub_.publish(evalNurbs)
+        #self.curParameter = self.curParameter + 0.01
+
+
+    def run(self):
+        while not rospy.is_shutdown():
+            if self.havingPlan :
+                self.publishTimedPlan()
+            self.rate.sleep()
+
+
+if __name__ == "__main__":
+    pl = PlanTracker()
+    pl.run()

@@ -14,6 +14,7 @@ private:
   int obstaclesIndexOffset_;
   int planesIndexOffset_;
   int infPlanesIndexOffset_;
+  int movingObstaclesIndexOffset_;
   int configRobotOffset_;
   int safetyMarginIndexOffset_;
   int timeStepIndexOffset_;
@@ -26,8 +27,9 @@ public:
   ForcesConverter();
   void setupParams(MpcProblem);
   void setForcesVariables(MpcProblem);
-  forcesParamArray params();
-  mm_MPC_params forces_params();
+  void updateForcesVariables(MpcProblem);
+  forcesParamArray* params();
+  mm_MPC_params* forces_params();
 };
 
 #endif /* FORCES_CONVERTER_H */

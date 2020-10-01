@@ -1,0 +1,7 @@
+*.forces
+*.mexa64
+*.mdl
+*.simulinkBlock.c
+*.simulinkBlockcompact.c
+*.a
+*.so

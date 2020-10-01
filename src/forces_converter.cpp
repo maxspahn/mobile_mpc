@@ -9,6 +9,7 @@ ForcesConverter::ForcesConverter()
   planesIndexOffset_ = 20;
   infPlanesIndexOffset_ = 20 + NPLANES * SPLANES;
   obstaclesIndexOffset_ = 20 + NPLANES * SPLANES + NINFPLA * SINFPLA;
+  movingObstaclesIndexOffset_ = 20 + NPLANES * SPLANES + NINFPLA * SINFPLA + NO * SO;
   safetyMarginIndexOffset_ = 19;
 }
 
@@ -31,6 +32,9 @@ void ForcesConverter::setupParams(MpcProblem mp)
   }
   for (int oI = 0; oI < (NO * SO); ++oI) {
     params_[oI + obstaclesIndexOffset_] = mp.obstacle(oI);
+  }
+  for (int mOI = 0; mOI < (NMO * SMO); ++mOI) {
+    params_[mOI + movingObstaclesIndexOffset_] = mp.movingObstacle(mOI);
   }
   for (int cI = 0; cI < NC; ++cI)
   {
@@ -65,12 +69,37 @@ void ForcesConverter::setForcesVariables(MpcProblem mp)
   }
 }
 
-forcesParamArray ForcesConverter::params()
+void ForcesConverter::updateForcesVariables(MpcProblem mp)
 {
-  return params_;
+  unsigned int index;
+  for (int sv = 0; sv < (NX + NS); ++sv) {
+    forces_params_.xinit[sv] = mp.curState(sv);
+  }
+  for (int uv = 0; uv < NUF; ++uv) {
+    forces_params_.xinit[NX + NS + uv] = mp.curU(uv);
+  }
+  unsigned int timeStep = 0;
+  for (int sv = 0; sv < (NX + NS); ++sv) {
+    index = timeStep * (NX + NS + NUF) + sv;
+    forces_params_.x0[index] = mp.curState(sv);
+  }
+  for (int uv = 0; uv < NUF; ++uv) {
+    index = timeStep * (NX + NS + NUF) + (NX + NS) + uv;
+    forces_params_.x0[index] = mp.curU(uv);
+  }
+  for (timeStep = 0; timeStep < TH; ++timeStep) {
+    for (int p = 0; p < NPF; ++p) {
+      index = (NPF * timeStep) + p;
+      forces_params_.all_parameters[index] = params_[p];
+    }
+  }
+}
+forcesParamArray* ForcesConverter::params()
+{
+  return &params_;
 }
 
-mm_MPC_params ForcesConverter::forces_params()
+mm_MPC_params* ForcesConverter::forces_params()
 {
-  return forces_params_;
+  return &forces_params_;
 }

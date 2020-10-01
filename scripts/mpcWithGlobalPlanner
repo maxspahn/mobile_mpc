@@ -1,0 +1,93 @@
+#! /usr/bin/env python
+
+import rospy
+
+import actionlib
+import numpy as np
+
+from std_msgs.msg import Float64MultiArray, Float64
+from nav_msgs.msg import Path
+
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+import mobile_mpc.msg
+
+class MPCClient(object):
+    def __init__(self):
+        rospy.init_node("mpc_client")
+        self.rate = rospy.Rate(10)
+        self.planSub_ = rospy.Subscriber('/move_base/NavfnROS/plan', Path, self.plan_cb)
+        self.client = actionlib.SimpleActionClient("mpc_server", mobile_mpc.msg.mpcAction)
+        rospy.loginfo("Wating for mpc server")
+        self.client.wait_for_server()
+        rospy.loginfo("Found mpc server")
+        self.motionTypes = rospy.get_param("/mpc/motionTypes")
+        self.goals = rospy.get_param("/mpc/goals")
+        self.myMaxError = rospy.get_param("/mpc/maxError")
+        self.rate.sleep()
+
+    def plan_cb(self, data):
+        rospy.loginfo("Received path")
+        """
+        rospy.loginfo("Frame : %s", data.header.frame_id)
+        rospy.loginfo("Size path : %d", len(data.poses))
+        """
+        nextPose = data.poses[50]
+        self.executeNextPose(nextPose)
+
+    def executeNextPose(self, nextPose):
+        motionType = "/noOrientation"
+        x = nextPose.pose.position.x
+        y = nextPose.pose.position.x
+        o = nextPose.pose.orientation
+        ol = [o.x, o.y, o.z, o.w]
+        (roll, pitch, yaw) = euler_from_quaternion(ol)
+        theta = pitch
+        goal = [x, y, yaw, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0, 0.0]
+        self.executeOneGoal(motionType, goal)
+
+    def executeReceivedPath(self):
+        motionType = "/noOrientation"
+        for i in range(len(self.path.poses)):
+            x = self.path.poses[i].pose.position.x
+            y = self.path.poses[i].pose.position.x
+            o = self.path.poses[i].pose.orientation
+            ol = [o.x, o.y, o.z, o.w]
+            (roll, pitch, yaw) = euler_from_quaternion(ol)
+            theta = pitch
+            goal = [x, y, yaw, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0, 0.0]
+            self.executeOneGoal(motionType, goal)
+
+    def executeOneGoal(self, motionType, goal):
+        safetyMargin = rospy.get_param("/mpc" + motionType + "/safetyMargin")
+        errorWeights = rospy.get_param("/mpc" + motionType + "/errorWeights")
+        myMPCWeights = rospy.get_param("/mpc" + motionType + "/weights")
+        goal = mobile_mpc.msg.mpcGoal(
+            goal=Float64MultiArray(data=goal),
+            errorWeights=Float64MultiArray(data=errorWeights),
+            maxError=Float64(data=self.myMaxError),
+            mpcWeights=Float64MultiArray(data=myMPCWeights),
+            safetyMargin=Float64(data=safetyMargin)
+        )
+
+        self.client.send_goal(goal)
+        self.client.wait_for_result()
+        result = self.client.get_result()
+        print("Result:", result.success)
+        #print("Final State : ", result.finalState.data)
+
+    def executeAllGoals(self):
+        for i in range(len(self.goals)):
+            motionType = self.motionTypes[i]
+            goal = self.goals[i]
+            self.executeOneGoal(motionType, goal)
+
+
+if __name__ == "__main__":
+    try:
+        c = MPCClient()
+        rospy.spin()
+        #c.executeAllGoals()
+        #c.executeReceivedPath()
+    except rospy.ROSInterruptException:
+        print("program interrupted before completion")

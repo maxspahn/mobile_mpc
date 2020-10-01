@@ -37,7 +37,7 @@ TEST_F(ForcesConverterTest, testParamSetupInfPlanes)
 {
   converter_.setupParams(mpcProblem_);
   forcesParamArray p = converter_.params();
-  EXPECT_EQ(p.size(), NPF);
+  EXPECT_EQ(p->size(), NPF);
   int infPlaneOffset = NC + NX + NW + 2 + NO * SO + NPLANES * SPLANES;
   for (int i = 0; i < NINFPLA; ++i) {
     EXPECT_THAT(p[infPlaneOffset + i * SINFPLA + 0], DoubleNear(0.0, EPSILON));

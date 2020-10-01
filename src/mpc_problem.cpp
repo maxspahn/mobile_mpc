@@ -28,6 +28,15 @@ void MpcProblem::initializeConstraints()
     obstacles_[SO * i + 2] = 0;
     obstacles_[SO * i + 3] = -100;
   }
+  for (int i = 0; i < NMO; ++i) {
+    movingObstacles_[SMO * i + 0] = 0;
+    movingObstacles_[SMO * i + 1] = 0;
+    movingObstacles_[SMO * i + 2] = 0;
+    movingObstacles_[SMO * i + 3] = 0;
+    movingObstacles_[SMO * i + 4] = 0;
+    movingObstacles_[SMO * i + 5] = 0;
+    movingObstacles_[SMO * i + 6] = -100;
+  }
   for (int i = 0; i < NPLANES; ++i) {
     planes_[SPLANES * i + 0] = 0;
     planes_[SPLANES * i + 1] = 0;
@@ -163,6 +172,33 @@ obstacleArray MpcProblem::obstacles()
 double MpcProblem::obstacle(int oI)
 {
   return obstacles_[oI];
+}
+
+void MpcProblem::movingObstacles(int limit, movingObstacleArray o)
+{
+  for (unsigned int i = 0; i < limit; ++i) {
+    movingObstacles_[i] = o[i];
+  }
+}
+
+void MpcProblem::movingObstacles(movingObstacleArray o)
+{
+  movingObstacles_ = o;
+}
+
+movingObstacleArray MpcProblem::movingObstacles()
+{
+  return movingObstacles_;
+}
+
+void MpcProblem::movingObstacle(int oI, double value)
+{
+  movingObstacles_[oI] = value;
+}
+
+double MpcProblem::movingObstacle(int oI)
+{
+  return movingObstacles_[oI];
 }
 
 void MpcProblem::planes(planeArray p)

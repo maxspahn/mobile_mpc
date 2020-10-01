@@ -1,0 +1,68 @@
+#! /usr/bin/env python
+
+import rospy
+import sys
+
+# Brings in the SimpleActionClient
+import actionlib
+import numpy as np
+
+from std_msgs.msg import Float64MultiArray, Float64
+from mm_msgs.msg import MobileRobotPose
+
+# Brings in the messages used by the fibonacci action, including the
+# goal message and the result message.
+import mobile_mpc.msg
+
+def createRandomArmConfig():
+    q_lim_franka_up = 0.8 * np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
+    q_lim_franka_low = 0.8 * np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
+    q_goal = q_lim_franka_low + np.random.rand(7) * (q_lim_franka_up - q_lim_franka_low)
+    #base_goal = base_min + np.random.rand(3) * (base_max - base_min)
+    return q_goal
+
+def mpc_client(x=0.0, y=0.0, theta=0.0):
+    # Creates the SimpleActionClient, passing the type of the action
+    # (FibonacciAction) to the constructor.
+    client = actionlib.SimpleActionClient("simpleMpc_server", mobile_mpc.msg.simpleMpcAction)
+
+    # Waits until the action server has started up and started
+    # listening for goals.
+    client.wait_for_server()
+    goalPose = MobileRobotPose()
+    goalPose.basePose.x = x
+    goalPose.basePose.y = y
+    goalPose.basePose.theta = theta
+    randArmConfig = createRandomArmConfig()
+    goalPose.armConfig = Float64MultiArray(data=randArmConfig)
+
+    # Creates a goal to send to the action server.
+    goal =  mobile_mpc.msg.simpleMpcGoal(
+        motionType="navigation",
+        goalPose=goalPose
+    )
+
+    # Sends the goal to the action server.
+    client.send_goal(goal)
+
+    # Waits for the server to finish performing the action.
+    client.wait_for_result()
+
+    # Prints out the result of executing the action
+    result = client.get_result()
+    print("Result:", result.success)
+    print("Execution Time : ", result.executionTime)
+    return client.get_result()  # A FibonacciResult
+
+
+if __name__ == "__main__":
+    try:
+        # Initializes a rospy node so that the SimpleActionClient can
+        # publish and subscribe over ROS.
+        rospy.init_node("simpleMpc_client_node")
+        x_des = float(sys.argv[1])
+        y_des = float(sys.argv[2])
+        theta_des = float(sys.argv[3])
+        result = mpc_client(x=x_des, y=y_des, theta=theta_des)
+    except rospy.ROSInterruptException:
+        print("program interrupted before completion")

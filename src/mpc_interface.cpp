@@ -2,7 +2,7 @@
 
 MpcInterface::MpcInterface(std::string name) :
   // time step and (safety margin)
-  mpcProblem_(0.5, 0.20),
+  mpcProblem_(1.0, 0.20),
   mpcSolver_(),
   name_(name),
   curExitFlag_(0)
@@ -10,12 +10,14 @@ MpcInterface::MpcInterface(std::string name) :
   pubRightWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/right_wheel/command", 10);
   pubLeftWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/left_wheel/command", 10);
   pubArm_ = nh_.advertise<std_msgs::Float64MultiArray>("/mmrobot/multijoint_command", 10);
+  pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
   pubSolveTime_ = nh_.advertise<std_msgs::Float64>("/solveTime", 10);
   subJointPosition_ = nh_.subscribe("/mmrobot/joint_states", 10, &MpcInterface::jointState_cb, this);
   subConstraints_base1_ = nh_.subscribe("/constraints_base1", 10, &MpcInterface::constraints_base1_cb, this);
   subConstraints_base2_ = nh_.subscribe("/constraints_base2", 10, &MpcInterface::constraints_base2_cb, this);
   subConstraints_mid_ = nh_.subscribe("/constraints_mid", 10, &MpcInterface::constraints_mid_cb, this);
   subConstraints_ee_ = nh_.subscribe("/constraints_ee", 10, &MpcInterface::constraints_ee_cb, this);
+  subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcInterface::movingObstacles_cb, this);
   curState_ = {0};
   curU_ = {0};
   problemSetup();
@@ -38,7 +40,8 @@ void MpcInterface::problemSetup()
 
 double MpcInterface::getRate()
 {
-  return 1.0/mpcProblem_.timeStep();
+  double r = 1.0/mpcProblem_.timeStep();
+  return r;
 }
 
 void MpcInterface::publishVelocities(curUArray vel)
@@ -63,6 +66,21 @@ void MpcInterface::publishZeroVelocities()
 {
   curUArray zeroVel = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   publishVelocities(zeroVel);
+}
+
+void MpcInterface::publishePredTraj()
+{
+  nav_msgs::Path pred_traj_msg;
+  std::vector<curStateArray> predTraj = mpcSolver_.getPredTraj();
+  pred_traj_msg.poses.resize(predTraj.size());
+  pred_traj_msg.header.frame_id = reference_frame_;
+  for (unsigned int i = 0; i < predTraj.size(); ++i) {
+    pred_traj_msg.poses[i].header.frame_id = reference_frame_;
+    pred_traj_msg.poses[i].pose.position.x = predTraj[i][0];
+    pred_traj_msg.poses[i].pose.position.y = predTraj[i][1];
+    pred_traj_msg.poses[i].pose.orientation.z = predTraj[i][2];
+  }
+  pubPredTraj_.publish(pred_traj_msg);
 }
 
 void MpcInterface::jointState_cb(const sensor_msgs::JointState::ConstPtr& data)
@@ -154,6 +172,17 @@ void MpcInterface::constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::Con
   }
 }
 
+void MpcInterface::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+{
+  mpcProblem_.movingObstacle(0, data->pose.position.x);
+  mpcProblem_.movingObstacle(1, data->pose.position.y);
+  mpcProblem_.movingObstacle(2, data->pose.position.z);
+  mpcProblem_.movingObstacle(3, data->twist.linear.x);
+  mpcProblem_.movingObstacle(4, data->twist.linear.y);
+  mpcProblem_.movingObstacle(5, data->twist.linear.z);
+  mpcProblem_.movingObstacle(6, data->size.data);
+}
+
 void MpcInterface::setGoal(goalArray goal)
 {
   mpcProblem_.goal(goal);
@@ -192,13 +221,15 @@ void MpcInterface::printState()
   }
 }
 
-curUArray MpcInterface::solve()
+curUArray MpcInterface::solve(unsigned int timeIndex)
 {
   //ROS_INFO("Start solve");
   getState();
   mpcProblem_.curU(curU_);
   mpcProblem_.curState(curState_);
-  mpcSolver_.setupMPC(mpcProblem_);
+  //if (timeIndex == 0) mpcSolver_.initMPC(mpcProblem_);
+  //mpcSolver_.updateMPC(mpcProblem_);
+  mpcSolver_.initMPC(mpcProblem_);
   mpcSolver_.solveMPC();
   std_msgs::Float64 solveTime;
   solveTime.data = mpcSolver_.getSolveTime();
@@ -211,6 +242,7 @@ curUArray MpcInterface::solve()
   curU_[0] = optCommands[0];
   curU_[1] = optCommands[1];
   curU_[9] = optCommands[9];
+  publishePredTraj();
   return optCommands;
 }
 
@@ -286,7 +318,7 @@ double MpcInterface::computeError()
     }
     accum += e;
   }
-  ROS_INFO("Max Error of %1.3f at %d\n", maxError, maxErrorIndex);
+  ROS_INFO("Max Error of %1.3f at %d", maxError, maxErrorIndex);
   double curError = sqrt(accum);
   return curError;
 }

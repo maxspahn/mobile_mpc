@@ -3,6 +3,7 @@
 
 #include <array>
 #include <vector>
+#include <iostream>
 
 #if STATIC_MPC == 0
   #include "definitions_mm_mpc.h"
@@ -16,6 +17,7 @@ typedef std::array<double, NU> curUArray;
 typedef std::array<double, NX + NS> curStateArray;
 typedef std::array<double, NP> paramArray;
 typedef std::array<double, NO * SO> obstacleArray;
+typedef std::array<double, NMO * SMO> movingObstacleArray;
 typedef std::array<double, NPLANES * SPLANES> planeArray;
 typedef std::array<double, NINFPLA * SINFPLA> infPlaneArray;
 typedef std::array<double, NC> configArray;
@@ -29,6 +31,7 @@ private:
   curUArray curU_;
   curStateArray curState_;
   obstacleArray obstacles_;
+  movingObstacleArray movingObstacles_;
   planeArray planes_;
   infPlaneArray infPlanes_;
   configArray configRobot_;
@@ -72,6 +75,11 @@ public:
   void obstacles(int, obstacleArray);
   obstacleArray obstacles();
   double obstacle(int);
+  void movingObstacles(movingObstacleArray);
+  void movingObstacles(int, movingObstacleArray);
+  void movingObstacle(int, double);
+  movingObstacleArray movingObstacles();
+  double movingObstacle(int);
   void planes(planeArray);
   planeArray planes();
   double plane(int);

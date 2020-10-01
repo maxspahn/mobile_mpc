@@ -1,0 +1,11 @@
+reference_frame: "odom"
+goals:
+  - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0, 0.0]
+timeStep: 0.5
+maxError: 0.1
+rate: 2.0
+navigation:
+  safetyMargin: 0.05
+  #arm, pos, orientation, slack, u, q_dot
+  weights: [0.0, 10.0, 0.5, 10000000.0, 0.4, 10.0]
+  errorWeights: [0.5, 0.5, 0.0]

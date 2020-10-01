@@ -17,7 +17,7 @@ class MpcForcesSolverTest : public ::testing::Test {
       mpcProblem_.curState(csa);
       mpcProblem_.weights(wa);
       mpcSolver_ = MpcForcesSolver(); 
-      mpcSolver_.setupMPC(mpcProblem_);
+      mpcSolver_.initMPC(mpcProblem_);
     }
   
   // void TearDown() override {}
@@ -27,53 +27,53 @@ class MpcForcesSolverTest : public ::testing::Test {
 
 TEST_F(MpcForcesSolverTest, testSettingsXinit)
 {
-  mm_MPC_params fp = mpcSolver_.forces_params();
-  EXPECT_THAT(fp.xinit[0], DoubleNear(-3.0, EPSILON));
-  EXPECT_THAT(fp.xinit[1], DoubleNear(-2.0, EPSILON));
-  EXPECT_THAT(fp.xinit[6], DoubleNear(-1.0, EPSILON));
-  EXPECT_THAT(fp.xinit[7], DoubleNear(0.5, EPSILON));
-  EXPECT_THAT(fp.xinit[8], DoubleNear(1.5, EPSILON));
+  mm_MPC_params *fp = mpcSolver_.forces_params();
+  EXPECT_THAT(fp->xinit[0], DoubleNear(-3.0, EPSILON));
+  EXPECT_THAT(fp->xinit[1], DoubleNear(-2.0, EPSILON));
+  EXPECT_THAT(fp->xinit[6], DoubleNear(-1.0, EPSILON));
+  EXPECT_THAT(fp->xinit[7], DoubleNear(0.5, EPSILON));
+  EXPECT_THAT(fp->xinit[8], DoubleNear(1.5, EPSILON));
   // U checking
-  EXPECT_THAT(fp.xinit[15], DoubleNear(0.0, EPSILON));
+  EXPECT_THAT(fp->xinit[15], DoubleNear(0.0, EPSILON));
 }
 
 TEST_F(MpcForcesSolverTest, testSettingsX0)
 {
-  mm_MPC_params fp = mpcSolver_.forces_params();
-  EXPECT_THAT(fp.x0[0], DoubleNear(-3.0, EPSILON));
-  EXPECT_THAT(fp.x0[1], DoubleNear(-2.0, EPSILON));
-  EXPECT_THAT(fp.x0[6], DoubleNear(-1.0, EPSILON));
-  EXPECT_THAT(fp.x0[7], DoubleNear(0.5, EPSILON));
-  EXPECT_THAT(fp.x0[8], DoubleNear(1.5, EPSILON));
-  EXPECT_THAT(fp.x0[1 * (NS + NX + NUF) + 0], DoubleNear(-3.0, EPSILON));
-  EXPECT_THAT(fp.x0[4 * (NS + NX + NUF) + 1], DoubleNear(-2.0, EPSILON));
-  EXPECT_THAT(fp.x0[2 * (NS + NX + NUF) + 6], DoubleNear(-1.0, EPSILON));
-  EXPECT_THAT(fp.x0[7 * (NS + NX + NUF) + 7], DoubleNear(0.5, EPSILON));
-  EXPECT_THAT(fp.x0[9 * (NS + NX + NUF) + 8], DoubleNear(1.5, EPSILON));
+  mm_MPC_params *fp = mpcSolver_.forces_params();
+  EXPECT_THAT(fp->x0[0], DoubleNear(-3.0, EPSILON));
+  EXPECT_THAT(fp->x0[1], DoubleNear(-2.0, EPSILON));
+  EXPECT_THAT(fp->x0[6], DoubleNear(-1.0, EPSILON));
+  EXPECT_THAT(fp->x0[7], DoubleNear(0.5, EPSILON));
+  EXPECT_THAT(fp->x0[8], DoubleNear(1.5, EPSILON));
+  EXPECT_THAT(fp->x0[1 * (NS + NX + NUF) + 0], DoubleNear(-3.0, EPSILON));
+  EXPECT_THAT(fp->x0[4 * (NS + NX + NUF) + 1], DoubleNear(-2.0, EPSILON));
+  EXPECT_THAT(fp->x0[2 * (NS + NX + NUF) + 6], DoubleNear(-1.0, EPSILON));
+  EXPECT_THAT(fp->x0[7 * (NS + NX + NUF) + 7], DoubleNear(0.5, EPSILON));
+  EXPECT_THAT(fp->x0[9 * (NS + NX + NUF) + 8], DoubleNear(1.5, EPSILON));
 }
 
 TEST_F(MpcForcesSolverTest, testSettingsParams)
 {
-  mm_MPC_params fp = mpcSolver_.forces_params();
+  mm_MPC_params *fp = mpcSolver_.forces_params();
   // Safety Margin
-  EXPECT_THAT(fp.all_parameters[19], DoubleNear( 0.0, EPSILON));
+  EXPECT_THAT(fp->all_parameters[19], DoubleNear( 0.0, EPSILON));
   // weights[3]
-  EXPECT_THAT(fp.all_parameters[NPF + 13 + 3], DoubleNear(100.0, EPSILON));
+  EXPECT_THAT(fp->all_parameters[NPF + 13 + 3], DoubleNear(100.0, EPSILON));
 }
 
 TEST_F(MpcForcesSolverTest, testSettingsInfPlanes)
 {
   EXPECT_EQ(mpcProblem_.infPlanes().size(), NINFPLA * SINFPLA);
   if (NINFPLA == 15) {
-    mm_MPC_params fp = mpcSolver_.forces_params();
-    EXPECT_THAT(fp.all_parameters[20], DoubleNear(0.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[21], DoubleNear(0.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[22], DoubleNear(1.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[23], DoubleNear(-5.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[4 * NPF + 20], DoubleNear(0.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[7 * NPF + 21], DoubleNear(0.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[9 * NPF + 22], DoubleNear(1.0, EPSILON));
-    EXPECT_THAT(fp.all_parameters[13 * NPF + 23], DoubleNear(-5.0, EPSILON));
+    mm_MPC_params *fp = mpcSolver_.forces_params();
+    EXPECT_THAT(fp->all_parameters[20], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[21], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[22], DoubleNear(1.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[23], DoubleNear(-5.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[4 * NPF + 20], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[7 * NPF + 21], DoubleNear(0.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[9 * NPF + 22], DoubleNear(1.0, EPSILON));
+    EXPECT_THAT(fp->all_parameters[13 * NPF + 23], DoubleNear(-5.0, EPSILON));
   }
 }
 
@@ -91,9 +91,9 @@ TEST_F(MpcForcesSolverTest, testSettingsPlanes)
                                   -2, -5.5, 0,  -2, -7.5, 0,   -2, -5.5, 0.7, 
                                    0, -5.5, 0,   0, -7.5, 0,    0, -5.5, 0.7});
     mpcProblem_.planes(pa);
-    mpcSolver_.setupMPC(mpcProblem_);
-    mm_MPC_params fp = mpcSolver_.forces_params();
-    EXPECT_THAT(fp.all_parameters[20], DoubleNear(-2.5, EPSILON));
+    mpcSolver_.initMPC(mpcProblem_);
+    mm_MPC_params *fp = mpcSolver_.forces_params();
+    EXPECT_THAT(fp->all_parameters[20], DoubleNear(-2.5, EPSILON));
   }
 }
 
@@ -107,7 +107,7 @@ TEST_F(MpcForcesSolverTest, testSettingsObstacles)
                                       -1.5, -6, 0, 1
                                       });
     mpcProblem_.obstacles(oa);
-    mpcSolver_.setupMPC(mpcProblem_);
+    mpcSolver_.initMPC(mpcProblem_);
   }
 }
 */

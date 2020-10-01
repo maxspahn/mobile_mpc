@@ -3,9 +3,9 @@
 MPCAction::MPCAction(std::string name) :
   as_(nh_, name, boost::bind(&MPCAction::executeCB, this, _1), false),
   action_name_(name),
-  mpcInterface_(name),
+  rate_(1.0),
   // must be set according to timeStep in mpc_interface
-  rate_(2.0)
+  mpcInterface_(name)
 {
   as_.start();
   setCollisionAvoidance();
@@ -109,10 +109,12 @@ void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
   ROS_INFO("Executing Forces MPC Action");
 
   ros::Time begin = ros::Time::now();
-  while (mpcInterface_.computeError() > maxError_)
+  unsigned int timeIndex = 0;
+  double curError = mpcInterface_.computeError();
+  while (curError > maxError_)
   {
-    ROS_INFO("Cur error %1.5f\n", mpcInterface_.computeError());
-    curUArray u_opt = mpcInterface_.solve();
+    ROS_INFO("Cur error %1.5f", curError);
+    curUArray u_opt = mpcInterface_.solve(timeIndex);
     feedback_.errorFlag = mpcInterface_.getCurExitFlag();
     rate_.sleep();
     mpcInterface_.publishVelocities(u_opt);
@@ -124,6 +126,9 @@ void MPCAction::executeCB(const mobile_mpc::mpcGoalConstPtr &goal)
       success = false;
       break;
     }
+    curError = mpcInterface_.computeError();
+    ROS_INFO("Cur error %1.5f", curError);
+    timeIndex++;
   }
   ros::Duration executionTime = ros::Time::now() - begin;
   ROS_INFO("Finishing Execution");

@@ -1,5 +1,5 @@
-#ifndef MPC_SOLVER_H
-#define MPC_SOLVER_H
+#ifndef MPC_FORCES_SOLVER_H
+#define MPC_FORCES_SOLVER_H
 
 #include "forces_converter.h"
 #include "mm_MPC.h"
@@ -15,13 +15,16 @@ private:
 public:
   MpcForcesSolver();
   ~MpcForcesSolver();
-  void setupMPC(MpcProblem&);
+  void initMPC(MpcProblem&);
+  void updateMPC(MpcProblem&);
   void solveMPC();
+  void receideTimeHorizon(mm_MPC_params*);
   curUArray getOptimalControl();
+  std::vector<curStateArray> getPredTraj();
   int getCurExitFlag();
   double getSolveTime();
   int getNbIter();
-  mm_MPC_params forces_params();
+  mm_MPC_params* forces_params();
 };
 
-#endif /* MPC_SOLVER_H */ 
+#endif /* MPC_FORCES_SOLVER_H */ 

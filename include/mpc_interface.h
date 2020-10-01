@@ -6,10 +6,12 @@
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 #include "sensor_msgs/JointState.h"
+#include "nav_msgs/Path.h"
 #include "tf/transform_listener.h"
 
 #include "mpc_forces_solver.h"
 #include <mm_msgs/LinearConstraint3DArray.h>
+#include <mm_msgs/DynamicObstacleMsg.h>
 
 #include <cmath>
 #include <fstream>
@@ -24,11 +26,13 @@ public:
   void problemSetup();
   void publishVelocities(curUArray vel);
   void publishZeroVelocities();
+  void publishePredTraj();
   void jointState_cb(const sensor_msgs::JointState::ConstPtr&);
   void constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
+  void movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
   void printState();
   void setGoal(goalArray);
   void setObstacles(obstacleArray);
@@ -36,7 +40,7 @@ public:
   void setPlanes(planeArray);
   void setInfPlanes(infPlaneArray);
   void parseProblem(goalArray, weightArray, errorWeightArray, double);
-  curUArray solve();
+  curUArray solve(unsigned int);
   void getState();
   double computeError();
   void writeResultFile();
@@ -52,11 +56,13 @@ private:
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;
   ros::Publisher pubSolveTime_;
+  ros::Publisher pubPredTraj_;
   ros::Subscriber subJointPosition_;
   ros::Subscriber subConstraints_base1_;
   ros::Subscriber subConstraints_base2_;
   ros::Subscriber subConstraints_mid_;
   ros::Subscriber subConstraints_ee_;
+  ros::Subscriber subMovingObstacles_;
   tf::TransformListener tfListener;
   curStateArray curState_;
   curUArray curU_;
