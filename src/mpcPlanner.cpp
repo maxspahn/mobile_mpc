@@ -449,8 +449,9 @@ void MpcPlanner::processOutput(int exitFlag)
       vel[i] = 0.2 * mpc_output_.x02[i + 11];  
     }
     for (int i = 2; i < 9; ++i) {
-      vel[i] = 0.0 * mpc_output_.x02[i + 11];  
+      vel[i] = 0.1 * mpc_output_.x02[i + 11];  
     }
+    //printParams();
     publishVelocities(vel);
     /*
     if (!isCloseToTarget()) {
@@ -458,11 +459,11 @@ void MpcPlanner::processOutput(int exitFlag)
       makePlanClient_.call(myPath_);
     }
     */
-    rate_.sleep();
     publishPredTraj();
-    //clearVariables();
+    clearVariables();
     setGoalParameters();
     setChangingParameters();
+    rate_.sleep();
   }
 }
 

@@ -18,3 +18,11 @@ mpc:
     weights: [0.7, 3.5, 1.5, 1.0, 1000000000.0, 0.1, 10.0]
     #pos, orientation, arm
     errorWeights: [1.0, 1.0, 1.0]
+  armMotion:
+    safetyMargin: 0.15
+    weights: [0.7, 0.0, 0.0, 0.0, 1000000000.0, 10000000.0, 10.0]
+    errorWeights: [0.0, 0.0, 1.0]
+  baseMotion:
+    safetyMargin: 0.15
+    weights: [0.00001, 3.5, 1.5, 1.0, 1000000000.0, 0.1, 100000.0]
+    errorWeights: [1.0, 1.0, 0.0]

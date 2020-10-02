@@ -141,21 +141,17 @@ class PlanTracker(object):
             if (evalTime < 0.99):
                 tan = operations.tangent(self.curve, evalTime, normalize=True)
                 theta = np.arctan2(tan[1][1], tan[1][0])
-                '''
                 if (theta < -np.pi/2):
                     theta = theta + np.pi
                 elif (theta > np.pi/2):
                     theta = theta - np.pi
-                '''
             else:
                 tan = operations.tangent(self.curve, 0.99, normalize=True)
                 theta = np.arctan2(tan[1][1], tan[1][0])
-                '''
                 if (theta < -np.pi/2):
                     theta = theta + np.pi
                 elif (theta > np.pi/2):
                     theta = theta - np.pi
-                '''
                 #theta = self.finalOri
             p2d = Pose2D()
             p2d.x = nurbsPoint[0]

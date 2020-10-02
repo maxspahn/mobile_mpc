@@ -18,6 +18,8 @@ def createRandomArmConfig():
     q_lim_franka_up = 0.8 * np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
     q_lim_franka_low = 0.8 * np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
     q_goal = q_lim_franka_low + np.random.rand(7) * (q_lim_franka_up - q_lim_franka_low)
+    q_goal = (q_lim_franka_low + q_lim_franka_up) / 2.0
+    q_goal = np.array([0, -np.pi/4.0, 0, -3.0 * np.pi/4.0, 0, np.pi / 2.0, np.pi/4.0])
     #base_goal = base_min + np.random.rand(3) * (base_max - base_min)
     return q_goal
 
@@ -26,15 +28,18 @@ def mpc_client(x=0.0, y=0.0, theta=0.0):
     # (FibonacciAction) to the constructor.
     client = actionlib.SimpleActionClient("simpleMpc_server", mobile_mpc.msg.simpleMpcAction)
 
+    # Get Goals
+    goals = rospy.get_param("/goals")
+    print(goals[0]["goalConfig"])
+
     # Waits until the action server has started up and started
     # listening for goals.
     client.wait_for_server()
     goalPose = MobileRobotPose()
-    goalPose.basePose.x = x
-    goalPose.basePose.y = y
-    goalPose.basePose.theta = theta
-    randArmConfig = createRandomArmConfig()
-    goalPose.armConfig = Float64MultiArray(data=randArmConfig)
+    goalPose.basePose.x = goals[1]['goalConfig'][0]
+    goalPose.basePose.y = goals[1]['goalConfig'][1]
+    goalPose.basePose.theta = goals[1]['goalConfig'][2]
+    goalPose.armConfig = Float64MultiArray(data=goals[1]['goalConfig'][3:10])
 
     # Creates a goal to send to the action server.
     goal =  mobile_mpc.msg.simpleMpcGoal(
@@ -60,9 +65,11 @@ if __name__ == "__main__":
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node("simpleMpc_client_node")
+        '''
         x_des = float(sys.argv[1])
         y_des = float(sys.argv[2])
         theta_des = float(sys.argv[3])
-        result = mpc_client(x=x_des, y=y_des, theta=theta_des)
+        '''
+        result = mpc_client()
     except rospy.ROSInterruptException:
         print("program interrupted before completion")
