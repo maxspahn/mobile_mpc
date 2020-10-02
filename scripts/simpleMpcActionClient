@@ -28,18 +28,14 @@ def mpc_client(x=0.0, y=0.0, theta=0.0):
     # (FibonacciAction) to the constructor.
     client = actionlib.SimpleActionClient("simpleMpc_server", mobile_mpc.msg.simpleMpcAction)
 
-    # Get Goals
-    goals = rospy.get_param("/goals")
-    print(goals[0]["goalConfig"])
-
     # Waits until the action server has started up and started
     # listening for goals.
     client.wait_for_server()
     goalPose = MobileRobotPose()
-    goalPose.basePose.x = goals[1]['goalConfig'][0]
-    goalPose.basePose.y = goals[1]['goalConfig'][1]
-    goalPose.basePose.theta = goals[1]['goalConfig'][2]
-    goalPose.armConfig = Float64MultiArray(data=goals[1]['goalConfig'][3:10])
+    goalPose.basePose.x = x
+    goalPose.basePose.y = y
+    goalPose.basePose.theta = theta
+    goalPose.armConfig = Float64MultiArray(data=createRandomArmConfig())
 
     # Creates a goal to send to the action server.
     goal =  mobile_mpc.msg.simpleMpcGoal(
@@ -65,11 +61,9 @@ if __name__ == "__main__":
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node("simpleMpc_client_node")
-        '''
         x_des = float(sys.argv[1])
         y_des = float(sys.argv[2])
         theta_des = float(sys.argv[3])
-        '''
-        result = mpc_client()
+        result = mpc_client(x=x_des, y=y_des, theta=theta_des)
     except rospy.ROSInterruptException:
         print("program interrupted before completion")

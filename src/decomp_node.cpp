@@ -158,8 +158,8 @@ vec_Vec3f Decomp::get_link_pos(std::string linkName) {
     firstPos[0] = posRos[0];
     firstPos[1] = posRos[1];
     firstPos[2] = posRos[2];
-    pos.push_back(firstPos + Vec3f(-0.5, 0.0, 0.0));
-    pos.push_back(firstPos + Vec3f(0.5, 0.0, 0.0));
+    pos.push_back(firstPos + Vec3f(0.0, 0.0, 0.0));
+    pos.push_back(firstPos + Vec3f(0.0, 0.0, -0.1));
   }
   return pos;
 }
