@@ -2,7 +2,7 @@
 <robot name="robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:include filename="$(find mobile_manipulator)/world/urdf/sphere.xacro"/>
-  <xacro:include filename="$(find airlabdemo2020)/world/urdf/box.xacro"/>
+  <xacro:include filename="$(find mobile_manipulator)/world/urdf/box.xacro"/>
 
   <link name="world"/>
 

@@ -99,26 +99,6 @@ void mexFunction( solver_int32_default nlhs, mxArray *plhs[], solver_int32_defau
 	}
 
 	/* copy parameters into the right location */
-	par = mxGetField(PARAMS, 0, "xinit");
-#ifdef MEXARGMUENTCHECKS
-    if( par == NULL )	
-	{
-        mexErrMsgTxt("PARAMS.xinit not found");
-    }
-    if( !mxIsDouble(par) )
-    {
-    mexErrMsgTxt("PARAMS.xinit must be a double.");
-    }
-    if( mxGetM(par) != 20 || mxGetN(par) != 1 ) 
-	{
-    mexErrMsgTxt("PARAMS.xinit must be of size [20 x 1]");
-    }
-#endif	 
-	if ( (mxGetN(par) != 0) && (mxGetM(par) != 0) )
-	{
-		copyMArrayToC_double(mxGetPr(par), params.xinit,20);
-
-	}
 	par = mxGetField(PARAMS, 0, "x0");
 #ifdef MEXARGMUENTCHECKS
     if( par == NULL )	
@@ -139,6 +119,26 @@ void mexFunction( solver_int32_default nlhs, mxArray *plhs[], solver_int32_defau
 		copyMArrayToC_double(mxGetPr(par), params.x0,300);
 
 	}
+	par = mxGetField(PARAMS, 0, "xinit");
+#ifdef MEXARGMUENTCHECKS
+    if( par == NULL )	
+	{
+        mexErrMsgTxt("PARAMS.xinit not found");
+    }
+    if( !mxIsDouble(par) )
+    {
+    mexErrMsgTxt("PARAMS.xinit must be a double.");
+    }
+    if( mxGetM(par) != 19 || mxGetN(par) != 1 ) 
+	{
+    mexErrMsgTxt("PARAMS.xinit must be of size [19 x 1]");
+    }
+#endif	 
+	if ( (mxGetN(par) != 0) && (mxGetM(par) != 0) )
+	{
+		copyMArrayToC_double(mxGetPr(par), params.xinit,19);
+
+	}
 	par = mxGetField(PARAMS, 0, "all_parameters");
 #ifdef MEXARGMUENTCHECKS
     if( par == NULL )	
@@ -149,14 +149,14 @@ void mexFunction( solver_int32_default nlhs, mxArray *plhs[], solver_int32_defau
     {
     mexErrMsgTxt("PARAMS.all_parameters must be a double.");
     }
-    if( mxGetM(par) != 5085 || mxGetN(par) != 1 ) 
+    if( mxGetM(par) != 5115 || mxGetN(par) != 1 ) 
 	{
-    mexErrMsgTxt("PARAMS.all_parameters must be of size [5085 x 1]");
+    mexErrMsgTxt("PARAMS.all_parameters must be of size [5115 x 1]");
     }
 #endif	 
 	if ( (mxGetN(par) != 0) && (mxGetM(par) != 0) )
 	{
-		copyMArrayToC_double(mxGetPr(par), params.all_parameters,5085);
+		copyMArrayToC_double(mxGetPr(par), params.all_parameters,5115);
 
 	}
 

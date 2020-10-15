@@ -21,10 +21,12 @@ simplempc_extfunc extfunc_eval = &simplempc_casadi2forces;
 MpcPlanner::MpcPlanner(std::string name) :
   as_(nh_, name, boost::bind(&MpcPlanner::executeCB, this, _1), false),
   action_name_(name),
-  rate_(0.5)
+  rate_(5)
 {
   // Setting variables and vector length
-  dt_ = 2.0;
+  dt1_ = 0.2;
+  dt2_ = 1.5;
+  dumpedProblems_ = 0;
   double H;
   nh_.getParam("/mpc/timeHorizon", H);
   timeHorizon_ = H;
@@ -45,8 +47,12 @@ MpcPlanner::MpcPlanner(std::string name) :
   subConstraints_ee_ = nh_.subscribe("/constraints_ee", 10, &MpcPlanner::constraints_ee_cb, this);
   subGlobalPath_ = nh_.subscribe("/spline/globalPath", 10, &MpcPlanner::globalPath_cb, this);
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
-  //subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcPlanner::movingObstacles_cb, this);
+  pubSolverInfo_ = nh_.advertise<mm_msgs::SolverInfo>("/mpc/solver_info", 10);
+  subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcPlanner::movingObstacles_cb, this);
+  subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcPlanner::resetDumpNumber_cb, this);
   finalBaseGoal_.fill(0.0);
+  nh_.getParam("velRedWheels", velRedWheels_);
+  nh_.getParam("velRedArm", velRedArm_);
   getMotionParameters("navigation");
   setConstantParameters();
   initializePlanes();
@@ -68,6 +74,17 @@ void MpcPlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
     if (isCloseToTarget()) globalPath_[i][2] = finalBaseGoal_[2];
     else globalPath_[i][2] = evalNurbs->evaluations[i].theta;
   }
+}
+
+void MpcPlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+{
+  movingObstacles_[0] =  data->pose.position.x;
+  movingObstacles_[1] =  data->pose.position.y;
+  movingObstacles_[2] =  data->pose.position.z;
+  movingObstacles_[3] =  data->twist.linear.x;
+  movingObstacles_[4] =  data->twist.linear.y;
+  movingObstacles_[5] =  data->twist.linear.z;
+  movingObstacles_[6] =  data->size.data;
 }
 
 bool MpcPlanner::isCloseToTarget()
@@ -172,6 +189,11 @@ void MpcPlanner::constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::Const
     }
   }
 }
+
+void MpcPlanner::resetDumpNumber_cb(const std_msgs::Bool::ConstPtr& data)
+{
+  dumpedProblems_ = 0.0;
+}
 // End: 
 // ******CALLBACKS******
 //
@@ -216,9 +238,10 @@ void MpcPlanner::initializeMovingObstacles()
 
 void MpcPlanner::getMotionParameters(std::string motionId)
 {
-  ROS_INFO("GETTING MOTION TYPE RELATED PARAMETERS"); 
+  //ROS_INFO("GETTING MOTION TYPE RELATED PARAMETERS"); 
   nh_.getParam("/mpc/maxError", mType_.accuracy);
-  nh_.getParam("/mpc/" + motionId + "/safetyMargin", mType_.safetyMargin);
+  nh_.getParam("/mpc/" + motionId + "/safetyMarginBase", mType_.safetyMarginBase);
+  nh_.getParam("/mpc/" + motionId + "/safetyMarginArm", mType_.safetyMarginArm);
   nh_.getParam("/mpc/" + motionId + "/weights", mType_.weights);
   nh_.getParam("/mpc/" + motionId + "/errorWeights", mType_.errorWeights);
 }
@@ -229,7 +252,10 @@ void MpcPlanner::setForcesParams()
   for (unsigned int i = 0; i < 10; ++i) {
     mpc_params_.xinit[i] = curState_[i];
   }
-  mpc_params_.xinit[10] = curSlack_;
+  //mpc_params_.xinit[10] = curSlack_;
+  for (unsigned int i = 0; i < 9; ++i) {
+    mpc_params_.xinit[10 + i] = curU_[i];
+  }
   // Setting x0 and params for all timesteps
   for (unsigned int t = 0; t < 15; ++t) {
     // Setting xO
@@ -241,7 +267,7 @@ void MpcPlanner::setForcesParams()
       mpc_params_.x0[j + t * 20] = curU_[j - 11];
     }
     // Setting params
-    for (unsigned int p = 0; p < 339; ++p) {
+    for (unsigned int p = 0; p < nbParams_; ++p) {
       mpc_params_.all_parameters[t * nbParams_ + p] = params_[p];
     }
   }
@@ -249,36 +275,38 @@ void MpcPlanner::setForcesParams()
 
 void MpcPlanner::setConstantParameters()
 {
-  params_[0] = dt_;
-  nh_.getParam("/wheelRadius", params_[1]);
-  nh_.getParam("/wheelSeperator", params_[2]);
+  params_[0] = dt1_;
+  params_[1] = dt2_;
+  nh_.getParam("/wheelRadius", params_[2]);
+  nh_.getParam("/wheelSeperator", params_[3]);
 }
 
 void MpcPlanner::setChangingParameters()
 {
-  ROS_INFO("SETTING CHANGING PARAMETERS");
+  //ROS_INFO("SETTING CHANGING PARAMETERS");
   // Spline
   for (unsigned int t = 0; t < timeHorizon_; ++t) {
-    params_[3 + t * 3 + 0] = globalPath_[t][0];
-    params_[3 + t * 3 + 1] = globalPath_[t][1];
-    params_[3 + t * 3 + 2] = globalPath_[t][2];
+    params_[4 + t * 3 + 0] = globalPath_[t][0];
+    params_[4 + t * 3 + 1] = globalPath_[t][1];
+    params_[4 + t * 3 + 2] = globalPath_[t][2];
   }
   // Weights
   for (unsigned int i = 0; i < 7; ++i) {
-    params_[56 + i] = mType_.weights[i];
+    params_[57 + i] = mType_.weights[i];
   }
   // SafetyMargin
-  params_[63] = mType_.safetyMargin;
+  params_[64] = mType_.safetyMarginBase;
+  params_[65] = mType_.safetyMarginArm;
   // InfPlanes Base1
   for (unsigned int i = 0; i < 15 * 4; ++i) {
-    params_[64 + i] = planesBase1_[i];
-    params_[124 + i] = planesBase2_[i];
-    params_[184 + i] = planesMid_[i];
-    params_[244 + i] = planesEE_[i];
+    params_[66 + i] = planesBase1_[i];
+    params_[126 + i] = planesBase2_[i];
+    params_[186 + i] = planesMid_[i];
+    params_[246 + i] = planesEE_[i];
   }
   // Moving Obstacles
   for (unsigned int i = 0; i < 35; ++i) {
-    params_[304 + i] = movingObstacles_[i];
+    params_[306 + i] = movingObstacles_[i];
   }
 }
 
@@ -288,7 +316,20 @@ void MpcPlanner::clearVariables()
   setConstantParameters();
   initializePlanes();
   initializeMovingObstacles();
-  
+}
+
+void MpcPlanner::resetInitialGuess()
+{
+  for (unsigned int t = 0; t < 15; ++t) {
+    // Setting xO
+    for (unsigned int i = 0; i < 10; ++i) {
+      mpc_params_.x0[i + t * 20] = 0.0;
+    }
+    mpc_params_.x0[10 + t * 20] = 0.0;
+    for (unsigned int j = 11; j < 20; ++j) {
+      mpc_params_.x0[j + t * 20] = 0.0;
+    }
+  }
 }
 
 void MpcPlanner::setManualParameters()
@@ -334,10 +375,10 @@ void MpcPlanner::setGoalParameters()
 {
   // Arm Goal
   for (unsigned int c = 0; c < 7; ++c) {
-    params_[49 + c] = armGoal_[c];
+    params_[50 + c] = armGoal_[c];
   }
   // Orientation Goal deprecated
-  params_[48] = oGoal_;
+  params_[49] = oGoal_;
 }
 // End: 
 // ******PARAMETER******
@@ -347,7 +388,7 @@ void MpcPlanner::setGoalParameters()
 //
 nav_msgs::GetPlan MpcPlanner::makePathRequest(const geometry_msgs::Pose2D baseGoal)
 {
-  ROS_INFO("CREATING PATH REQUEST");
+  //ROS_INFO("CREATING PATH REQUEST");
   nav_msgs::GetPlan pathPlan;
   std::string refFrame;
   nh_.getParam("/reference_frame", refFrame);
@@ -374,9 +415,13 @@ void MpcPlanner::updatePathRequest()
 
 int MpcPlanner::solve()
 {
-  ROS_INFO("ATTEMPTING TO SOLVE MPC PROBLEM");
   int exitFlag = simplempc_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
-  ROS_INFO("RETURNED WITH ERROR FLAG : %d", exitFlag);
+  if(exitFlag < 1) dumpProblem();
+  mm_msgs::SolverInfo info;
+  info.exitFlag = (int8_t)exitFlag;
+  info.nbIterations = (int16_t)mpc_info_.it;
+  info.solvingTime = (double)mpc_info_.solvetime;
+  pubSolverInfo_.publish(info);
   return exitFlag;
 }
 
@@ -433,6 +478,7 @@ void MpcPlanner::publishZeroVelocities()
 
 void MpcPlanner::processOutput(int exitFlag)
 {
+  curSlack_ = mpc_output_.x02[10];
   if (exitFlag > 0) {
     std::array<double, 9> vel;
     for (int i = 0; i < 9; ++i) {
@@ -442,14 +488,19 @@ void MpcPlanner::processOutput(int exitFlag)
     shiftTime();
     publishPredTraj();
     rate_.sleep();
+    errorFlagCounter_ = 0;
   }
   else {
+    errorFlagCounter_++;
     std::array<double, 9> vel;
+    //ROS_INFO("VEL REDUCTION OF %1.5f AND %1.5f", velRedWheels_, velRedArm_);
     for (int i = 0; i < 2; ++i) {
-      vel[i] = 0.2 * mpc_output_.x02[i + 11];  
+      // 0.2
+      vel[i] = velRedWheels_ * mpc_output_.x02[i + 11];  
     }
     for (int i = 2; i < 9; ++i) {
-      vel[i] = 0.1 * mpc_output_.x02[i + 11];  
+      // 0.1
+      vel[i] = velRedArm_ * mpc_output_.x02[i + 11];  
     }
     //printParams();
     publishVelocities(vel);
@@ -459,8 +510,10 @@ void MpcPlanner::processOutput(int exitFlag)
       makePlanClient_.call(myPath_);
     }
     */
-    publishPredTraj();
-    clearVariables();
+    //publishPredTraj();
+    if (errorFlagCounter_ > 10) {
+      clearVariables();
+    }
     setGoalParameters();
     setChangingParameters();
     rate_.sleep();
@@ -469,7 +522,7 @@ void MpcPlanner::processOutput(int exitFlag)
 
 void MpcPlanner::publishPredTraj()
 {
-  ROS_INFO("Publishing predicted trajectory");
+  //ROS_INFO("Publishing predicted trajectory");
   nav_msgs::Path pred_traj_msg;
   pred_traj_msg.poses.resize(13);
   std::string refFrame;
@@ -565,10 +618,10 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
     }
     setChangingParameters();
     setForcesParams();
+    // Set initial guess to all zeros
+    //resetInitialGuess();
     //ros::spinOnce();
-    //printParams();
     ef = solve();
-    //printOutput();
     processOutput(ef);
     counter++;
   }
@@ -596,8 +649,8 @@ void MpcPlanner::printOutput()
 }
 void MpcPlanner::printParams()
 {
-  ROS_INFO("Printing %d parameters", nbParams_);
-  for (int i = 0; i < nbParams_; ++i) {
+  ROS_INFO("Printing %d parameters", 240);
+  for (int i = 64; i < 304; ++i) {
     std::cout << i << " : " << params_[i] << std::endl;
   }
   /*
@@ -610,6 +663,42 @@ void MpcPlanner::printParams()
     std::cout << "xinit[" << i << "] : " << mpc_params_.x0[i] << std::endl;
   }
   */
+}
+
+std::string MpcPlanner::getCurrentTimeString()
+{
+  time_t rawtime;
+  struct tm * timeinfo;
+  char buffer[80];
+  time (&rawtime);
+  timeinfo = localtime(&rawtime);
+  strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", timeinfo);
+  std::string res(buffer);
+  return res + "_" + std::to_string(dumpedProblems_);
+}
+
+void MpcPlanner::dumpProblem()
+{
+  ROS_INFO("ATTEMPTING TO DUMP PROBLEM, nr : %d", dumpedProblems_);
+  if (dumpedProblems_ >= 10) {
+    return;
+  }
+  std::string curTime = getCurrentTimeString();
+  std::string fileName = "/home/mspahn/catkin_clean/src/mobile_mpc/dumpedCppFiles/dump_" + curTime + ".csv";
+  ROS_INFO("DUMPING PROBLEM TO FILE %s", fileName.c_str());
+  std::ofstream dumpFile;
+  dumpFile.open(fileName);
+  for(unsigned int i = 0; i < 20; ++i) {
+    dumpFile << mpc_params_.xinit[i] << "\n";
+  }
+  for (unsigned int i = 0; i < 300; ++i) {
+    dumpFile << mpc_params_.x0[i] << "\n";
+  }
+  for (unsigned int i = 0; i < 5115; ++i) {
+    dumpFile << mpc_params_.all_parameters[i] << "\n";
+  }
+  dumpFile.close();
+  dumpedProblems_++;
 }
 
 void MpcPlanner::runNode() 

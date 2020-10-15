@@ -35,8 +35,9 @@ class PlanTracker(object):
         self.curve.vis = VisMPL.VisCurve2D()
         self.startTime = rospy.get_time()
         self.endTime = rospy.get_time()
-        self.maxSpeed = 0.5
-        self.dt = 2.0
+        self.maxSpeed = 0.1
+        self.dt1 = 0.2
+        self.dt2 = 1.5
         self.duration = 1.0
         self.havingPlan = False
         #self.defaultPlan()
@@ -131,11 +132,17 @@ class PlanTracker(object):
         return np.linalg.norm(posA - posB)
 
     def publishTimedPlan(self):
-        deltaParameter = self.dt / self.duration
+        if (self.havingPlan == False):
+            return
         curTime = rospy.Time.now()
         self.curParameter = (curTime.to_sec() - self.startTime.to_sec()) / self.duration
         evalNurbs = NurbsEval2D()
         for i in range(rospy.get_param("/mpc/timeHorizon")):
+            if (i < 5):
+                dt = self.dt1
+            else:
+                dt = self.dt2
+            deltaParameter = dt / self.duration
             evalTime = np.min([self.curParameter + i * deltaParameter, 1.0])
             nurbsPoint = self.curve.evaluate_single(evalTime)
             if (evalTime < 0.99):

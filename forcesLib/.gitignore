@@ -5,3 +5,5 @@
 *.simulinkBlockcompact.c
 *.a
 *.so
+*.mat
+*.m~

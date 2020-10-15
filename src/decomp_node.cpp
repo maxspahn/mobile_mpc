@@ -144,22 +144,27 @@ sensor_msgs::PointCloud Decomp::vec_to_cloud(const vec_Vec3f &pts) {
 
 vec_Vec3f Decomp::get_link_pos(std::string linkName) {
   vec_Vec3f pos;
-  if (linkName.compare("base_sphere_blablabla") == 0) {
-    Vec3f firstPos = Vec3f(globalPath_[0][0], globalPath_[0][1], 0.2);
+  Vec3f firstPos = Vec3f(0, 0, 0);
+  if (linkName.compare("base_sphere_blabla") == 0) {
+    tf::StampedTransform strans;
+    tfListenerPtr_->lookupTransform(reference_frame_, linkName, ros::Time(0.0), strans);
+    tf::Vector3 posRos = strans.getOrigin();
+    firstPos[0] = posRos[0];
+    firstPos[1] = posRos[1];
+    firstPos[2] = posRos[2] + 0.2;
     Vec3f secondPos = Vec3f(globalPath_[10][0], globalPath_[10][1], 0.2);
     pos.push_back(firstPos);
     pos.push_back(secondPos);
   }
   else {
-    Vec3f firstPos = Vec3f(0, 0, 0);
     tf::StampedTransform strans;
     tfListenerPtr_->lookupTransform(reference_frame_, linkName, ros::Time(0.0), strans);
     tf::Vector3 posRos = strans.getOrigin();
     firstPos[0] = posRos[0];
     firstPos[1] = posRos[1];
     firstPos[2] = posRos[2];
-    pos.push_back(firstPos + Vec3f(0.0, 0.0, 0.0));
-    pos.push_back(firstPos + Vec3f(0.0, 0.0, -0.1));
+    pos.push_back(firstPos + Vec3f(0.0, 0.0, -0.0));
+    pos.push_back(firstPos + Vec3f(0.0, 0.0, -0.2));
   }
   return pos;
 }
@@ -194,13 +199,13 @@ void Decomp::decompose() {
   vec_E<Ellipsoid3D> es = decomp_util.get_ellipsoids();
   vec_E<Polyhedron3D> polys = decomp_util.get_polyhedrons();
   */
-  
-
-  // Using seeds
   vec_E<Ellipsoid3D> es;
   vec_E<Polyhedron3D> polys;
   std::array<double, 4> sphere_sizes = {2.5, 2.5, 1.0, 1.0};
-  for (size_t i = 0; i < paths.size(); ++i) {
+
+  // Using small paths
+  size_t i = 0;
+  for (; i < paths.size(); ++i) {
     //SeedDecomp3D decomp_util(seed_centers[i]);
     EllipsoidDecomp3D decomp_util;
     decomp_util.set_obs(obs_);
@@ -225,6 +230,47 @@ void Decomp::decompose() {
     polys.clear();
     es.clear();
   }
+
+  // Using seeds
+  double dist;
+  std::vector<int> toBeRemoved;
+  for (; i < paths.size(); ++i) {
+    SeedDecomp3D decomp_util(paths[i][0]);
+    decomp_util.set_obs(obs_);
+    decomp_util.dilate(sphere_sizes[i]);
+    es.push_back(decomp_util.get_ellipsoid());
+    polys.push_back(decomp_util.get_polyhedron());
+    // Visualization
+    decomp_ros_msgs::PolyhedronArray poly_msg = DecompROS::polyhedron_array_to_ros(polys);
+    decomp_ros_msgs::EllipsoidArray es_msg = DecompROS::ellipsoid_array_to_ros(es);
+    poly_msg.header.frame_id = reference_frame_;
+    es_msg.header.frame_id = reference_frame_;
+    poly_pub_[i].publish(poly_msg);
+    es_pub_[i].publish(es_msg);
+    // Inequalities
+    auto hps = polys[0].hyperplanes();
+    auto it = hps.begin();
+    while(it != hps.end()) {
+      dist = 0.0;
+      for (int k = 0; k < 3; ++k) {
+        dist += (it->p_[k] - paths[i][0][k]) * (it->p_[k] - paths[i][0][k]);
+      }
+      if (dist > (sphere_sizes[i] * sphere_sizes[i])) {
+        hps.erase(it);
+      }
+      else {
+        ++it;
+      }
+    }
+    const auto pt_inside = (paths[i][0]);
+    LinearConstraint3D cs(pt_inside, hps);
+    mm_msgs::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
+    constraint_pub_[i].publish(constraints);
+    polys.clear();
+    es.clear();
+  }
+  
+
 
 }
 

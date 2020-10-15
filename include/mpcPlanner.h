@@ -4,12 +4,14 @@
 #include "ros/ros.h"
 // Messages
 #include "std_msgs/Float64MultiArray.h"
+#include "std_msgs/Bool.h"
 #include "sensor_msgs/JointState.h"
 #include "nav_msgs/Path.h"
 #include "nav_msgs/GetPlan.h"
 #include "mm_msgs/LinearConstraint3DArray.h"
 #include "mm_msgs/DynamicObstacleMsg.h"
 #include "mm_msgs/NurbsEval2D.h"
+#include "mm_msgs/SolverInfo.h"
 // Action Server
 #include <actionlib/server/simple_action_server.h>
 #include <mobile_mpc/simpleMpcAction.h>
@@ -19,6 +21,7 @@
 
 // general c-staff
 #include "cmath"
+//#include "ctime"
 #include "fstream"
 #include <numeric>
 
@@ -31,7 +34,8 @@ struct MotionType
 {
   double accuracy;
   double threshholdCost;
-  double safetyMargin;
+  double safetyMarginBase;
+  double safetyMarginArm;
   std::vector<double> weights;
   std::vector<double> errorWeights;
 };
@@ -49,8 +53,8 @@ protected:
   ros::Publisher pubRightWheel_;
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;
-  //ros::Publisher pubSolveInfo_;
   ros::Publisher pubPredTraj_;
+  ros::Publisher pubSolverInfo_;
   // Subscriber
   ros::Subscriber subJointPosition_;
   ros::Subscriber subConstraints_base1_;
@@ -59,6 +63,7 @@ protected:
   ros::Subscriber subConstraints_ee_;
   ros::Subscriber subMovingObstacles_;
   ros::Subscriber subGlobalPath_;
+  ros::Subscriber subResetDumpNumber_;
   // Serrvices
   ros::ServiceClient makePlanClient_;
   // State variables
@@ -69,16 +74,22 @@ protected:
   std::array<double, 60> planesMid_;
   std::array<double, 60> planesEE_;
   std::array<double, 35> movingObstacles_;
-  unsigned int nbParams_ = 339;
-  std::array<double, 339> params_;
+  unsigned int nbParams_ = 341;
+  std::array<double, 341> params_;
+  double velRedWheels_;
+  double velRedArm_;
   unsigned int timeHorizon_;
   std::vector<std::array<double, 3>> globalPath_;
   std::array<double, 7> armGoal_;
   std::array<double, 3> finalBaseGoal_;
-  double safetyMargin_;
+  double safetyMarginBase_;
+  double safetyMarginArm_;
   double oGoal_;
   double curSlack_;
-  double dt_;
+  double dt1_;
+  double dt2_;
+  unsigned int errorFlagCounter_;
+  unsigned int dumpedProblems_;
   nav_msgs::GetPlan myPath_;
   // Motion Type
   MotionType mType_;
@@ -96,6 +107,8 @@ public:
   void constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr&);
+  void movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
+  void resetDumpNumber_cb(const std_msgs::Bool::ConstPtr&);
   // Setting Getting Parameters
   void getMotionParameters(std::string);
   void initializePlanes();
@@ -105,6 +118,7 @@ public:
   void setGoalParameters();
   void setForcesParams();
   void clearVariables();
+  void resetInitialGuess();
   // Action
   nav_msgs::GetPlan makePathRequest(const geometry_msgs::Pose2D);
   void updatePathRequest();
@@ -121,6 +135,8 @@ public:
   void setManualParameters();
   void printParams();
   void printOutput();
+  std::string getCurrentTimeString();
+  void dumpProblem();
   // Running 
   void runNode();
 };

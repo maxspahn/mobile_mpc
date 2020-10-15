@@ -14,6 +14,8 @@ addpath(forcesPath);
 addpath(casadiPath);
 
 addpath('../distanceFunctions');
+addpath('costFunctions');
+addpath('ineqFunctions');
 
 
 % Turn off warnings for having a too recent Gcc compiler and some
@@ -23,61 +25,29 @@ warning('off', 'MATLAB:webservices:WSDLDeprecationWarning');
 
 %% Delete previous Solver
 % Forces does not always code changes and might reuse the previous solution
-try
-FORCEScleanup('solverName','all');
-catch
-end
-
-try
-    rmdir('@FORCESproWS','s')
-catch
-end
-try
-    rmdir('solverName','s')
-catch
-end
+% try
+% FORCEScleanup('solverName','all');
+% catch
+% end
+% 
+% try
+%     rmdir('@FORCESproWS','s')
+% catch
+% end
+% try
+%     rmdir('solverName','s')
+% catch
+% end
 % 
 
 %% Problem dimensions
 model.N = 15;                                           % horizon length
-collStruct.nbObstacles = 0;
-collStruct.nbMovingObstacles = 5;
-collStruct.dimMovingObstacle = 7;
-collStruct.nbSpheres = 4;
-collStruct.nbSelfCollision = 0;
-collStruct.nbPlanes = 0;
-collStruct.nbInfPlanesEachSphere = 15;
-collStruct.dimPlane = 9;
-collStruct.dimInfPlane = 4;
-collStruct.dimObstacle = 4;
 
-pMap = struct();
-pMap.dt = 1;
-pMap.r = 2;
-pMap.L = 3;
-pMap.refPath = [4, 4 + 3 * model.N - 1];
-pMap.desOrient = 4 + 3 * model.N;
-pMap.desArmConfig = [pMap.desOrient + 1, pMap.desOrient + 7];
-pMap.weights = [pMap.desArmConfig(2) + 1, pMap.desArmConfig(2) + 7];
-pMap.safetyMargin = pMap.weights(2) + 1;
-pMap.colAvoidance = collStruct;
-pMap.colAvoidance.offset = pMap.safetyMargin + 1;
+pMap = generatePMap(model.N);
 
-nbInfPlanes = collStruct.nbInfPlanesEachSphere * collStruct.nbSpheres;
-
-nbInequalities = (collStruct.nbObstacles + collStruct.nbPlanes + collStruct.nbInfPlanesEachSphere + collStruct.nbMovingObstacles) * collStruct.nbSpheres +...
-    collStruct.nbSelfCollision; 
+nbInequalities = pMap.nbInfPlanes + pMap.nbMovingObstacles * 4; 
 model.nh = nbInequalities;   % number of inequality constraint functions
-n_other_param = 3 +... % timeStep, r, L (1, 2, 3)
-    3 *  model.N + ... % Reference path (4, ..., 4 + 3 * N) [x, y, orientation]
-    1 + ... % desired orientation
-    7 + ... % desired arm configuration
-    7 + ... % weights
-    1 + ... % safety Margin
-    collStruct.dimObstacle * collStruct.nbObstacles +...
-    collStruct.dimPlane * collStruct.nbPlanes + ...
-    collStruct.dimInfPlane * nbInfPlanes + ...
-    collStruct.dimMovingObstacle * collStruct.nbMovingObstacles;
+n_other_param = pMap.movingObstacles(2);
 
 
 model.nvar = 3 + 7 + 1 + 2 + 7;                     % number of variables [x, y, theta, q (size : 7), slack, u1, u2, q_dot (size : 7)]
@@ -106,22 +76,61 @@ upper_bound = [inf, inf, inf, q_lim_franka_up, slack_lim_up, wheel_lim_vel, whee
 model.lb = velocity_safety * lower_bound;
 model.ub = velocity_safety * upper_bound;
 
+model.objective{1} =  @(z, p) costFunctionSimple_1(z, p, pMap);
+model.objective{2} =  @(z, p) costFunctionSimple_2(z, p, pMap);
+model.objective{3} =  @(z, p) costFunctionSimple_3(z, p, pMap);
+model.objective{4} =  @(z, p) costFunctionSimple_4(z, p, pMap);
+model.objective{5} =  @(z, p) costFunctionSimple_5(z, p, pMap);
+model.objective{6} =  @(z, p) costFunctionSimple_6(z, p, pMap);
+model.objective{7} =  @(z, p) costFunctionSimple_7(z, p, pMap);
+model.objective{8} =  @(z, p) costFunctionSimple_8(z, p, pMap);
+model.objective{9} =  @(z, p) costFunctionSimple_9(z, p, pMap);
+model.objective{10} = @(z, p) costFunctionSimple_10(z, p, pMap);
+model.objective{11} = @(z, p) costFunctionSimple_11(z, p, pMap);
+model.objective{12} = @(z, p) costFunctionSimple_12(z, p, pMap);
+model.objective{13} = @(z, p) costFunctionSimple_13(z, p, pMap);
+model.objective{14} = @(z, p) costFunctionSimple_14(z, p, pMap);
+model.objective{15} = @(z, p) costFunctionSimple_15(z, p, pMap);
+
+model.ineq{1} =  @(z, p) obstacleAvoidanceSimple_1(z, p, pMap);
+model.ineq{2} =  @(z, p) obstacleAvoidanceSimple_2(z, p, pMap);
+model.ineq{3} =  @(z, p) obstacleAvoidanceSimple_3(z, p, pMap);
+model.ineq{4} =  @(z, p) obstacleAvoidanceSimple_4(z, p, pMap);
+model.ineq{5} =  @(z, p) obstacleAvoidanceSimple_5(z, p, pMap);
+model.ineq{6} =  @(z, p) obstacleAvoidanceSimple_6(z, p, pMap);
+model.ineq{7} =  @(z, p) obstacleAvoidanceSimple_7(z, p, pMap);
+model.ineq{8} =  @(z, p) obstacleAvoidanceSimple_8(z, p, pMap);
+model.ineq{9} =  @(z, p) obstacleAvoidanceSimple_9(z, p, pMap);
+model.ineq{10} = @(z, p) obstacleAvoidanceSimple_10(z, p, pMap);
+model.ineq{11} = @(z, p) obstacleAvoidanceSimple_11(z, p, pMap);
+model.ineq{12} = @(z, p) obstacleAvoidanceSimple_12(z, p, pMap);
+model.ineq{13} = @(z, p) obstacleAvoidanceSimple_13(z, p, pMap);
+model.ineq{14} = @(z, p) obstacleAvoidanceSimple_14(z, p, pMap);
+model.ineq{15} = @(z, p) obstacleAvoidanceSimple_15(z, p, pMap);
+
 %% Costs, dynamics, obstacles
 for i=1:model.N
-    %% Objective function
-    model.objective{i} = @(z, p) costFunctionSimple(z, p, pMap, i);
-    model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p, pMap, i);
-    %% Upper/lower bounds For road boundaries
+    % Objective function
+    %model.objective{i} = @(z, p) costFunctionSimple(z, p, pMap, i);
+    %model.ineq{i} = @(z, p) obstacleAvoidanceSimple(z, p, pMap, i);
+    % Upper/lower bounds For road boundaries
     model.hu{i} = inf(nbInequalities, 1);
     model.hl{i} = zeros(nbInequalities, 1);
+    % Transition Function
+    if (i < 5)
+        model.eq{i} = @(z, p) transitionFunctionSimple_1(z, p, pMap);
+    elseif (i < model.N)
+        model.eq{i} = @(z, p) transitionFunctionSimple_2(z, p, pMap);
+    end
+%     if (i < model.N)
+%         model.eq{i} = @(z, p) transitionFunctionSimple(i, z, p, pMap);
+%     end
 end
 
-% Transition Function
-model.eq = @(z, p) transitionFunctionSimple(z, p, pMap);
 
 %% Initial and final conditions
 
-model.xinitidx = 1:20; % use this to specify on which variables initial conditions are imposed
+model.xinitidx = [1:10, 12:20]; % use this to specify on which variables initial conditions are imposed
 
 %model.xfinal = 0; % v final=0 (standstill), heading angle final=0?
 %model.xfinalidx = 6; % use this to specify on which variables final conditions are imposed
@@ -129,7 +138,7 @@ model.xinitidx = 1:20; % use this to specify on which variables initial conditio
 %% Define solver options
 codeoptions = getOptions(solverName);
 codeoptions.maxit = 200;   % Maximum number of iterations
-codeoptions.printlevel = 1; % Use printlevel = 2 to print progress (but not for timings)
+codeoptions.printlevel = 2; % Use printlevel = 2 to print progress (but not for timings)
 codeoptions.optlevel = 3;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
 codeoptions.timing = 1;
 codeoptions.overwrite = 1;
@@ -144,12 +153,12 @@ codeoptions.nlp.checkFunctions = 1;
 
 
 % Dumping the problem
-% codeoptions.dump_formulation = 1;
-% [stages, codeoptions, formulation] = FORCES_NLP(model, codeoptions);
-% tag = ForcesDumpFormulation(formulation, codeoptions);
+codeoptions.dump_formulation = 1;
+[stages, codeoptions, formulation] = FORCES_NLP(model, codeoptions);
+tag = ForcesDumpFormulation(formulation, codeoptions);
 
 % codeoptions.nlp.integrator.type = 'ERK2';
 % codeoptions.nlp.integrator.Ts = 0.1;
 % codeoptions.nlp.integrator.nodes = 5;
 
-FORCES_NLP(model, codeoptions);
+%FORCES_NLP(model, codeoptions);

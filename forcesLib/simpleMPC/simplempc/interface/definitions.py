@@ -9,9 +9,9 @@ c_header = "include/simplempc.h"
 
 # Parameter             | Type    | Scalar type      | Ctypes type    | Numpy type   | Shape     | Len
 params = \
-[("xinit"               , "dense" , ""               , ctypes.c_double, numpy.float64, ( 20,   1),   20),
- ("x0"                  , "dense" , ""               , ctypes.c_double, numpy.float64, (300,   1),  300),
- ("all_parameters"      , "dense" , ""               , ctypes.c_double, numpy.float64, (5085,   1), 5085)]
+[("x0"                  , "dense" , ""               , ctypes.c_double, numpy.float64, (300,   1),  300),
+ ("xinit"               , "dense" , ""               , ctypes.c_double, numpy.float64, ( 19,   1),   19),
+ ("all_parameters"      , "dense" , ""               , ctypes.c_double, numpy.float64, (5115,   1), 5115)]
 
 # Output                | Type    | Scalar type      | Ctypes type    | Numpy type   | Shape     | Len
 outputs = \

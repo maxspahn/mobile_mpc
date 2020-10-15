@@ -12,7 +12,7 @@
   
   <node name="global_path_tracker" pkg="mobile_mpc" type="globalPlanTracker" output="screen"/>
 
-  <node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/>
+  <!--node name="mpc_decomp" pkg="mobile_mpc" type="decomp_node" respawn="false" output="screen"/-->
 
   <node name="rviz" type="rviz" pkg="rviz"
     args="-d $(find mobile_mpc)/config/simplempc.rviz"/>

@@ -1,10 +1,6 @@
-function x_next = transitionFunctionSimple(i, z, p, pMap)
+function x_next = transitionFunctionSimple_1(z, p, pMap)
 
-if (i > 5)
-    dt = p(pMap.dt2);
-else
-    dt = p(pMap.dt1);
-end
+dt = p(pMap.dt1);
 
 x = z(1:10);
 u = z(12:20);

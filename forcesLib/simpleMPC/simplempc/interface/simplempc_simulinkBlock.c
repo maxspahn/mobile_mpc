@@ -77,19 +77,19 @@ static void mdlInitializeSizes(SimStruct *S)
     if (!ssSetNumInputPorts(S, 3)) return;
     	
 	/* Input Port 0 */
-    ssSetInputPortMatrixDimensions(S,  0, 20, 1);
+    ssSetInputPortMatrixDimensions(S,  0, 300, 1);
     ssSetInputPortDataType(S, 0, SS_DOUBLE);
     ssSetInputPortComplexSignal(S, 0, COMPLEX_NO); /* no complex signals suppported */
     ssSetInputPortDirectFeedThrough(S, 0, 1); /* Feedthrough enabled */
     ssSetInputPortRequiredContiguous(S, 0, 1); /*direct input signal access*/	
 	/* Input Port 1 */
-    ssSetInputPortMatrixDimensions(S,  1, 300, 1);
+    ssSetInputPortMatrixDimensions(S,  1, 19, 1);
     ssSetInputPortDataType(S, 1, SS_DOUBLE);
     ssSetInputPortComplexSignal(S, 1, COMPLEX_NO); /* no complex signals suppported */
     ssSetInputPortDirectFeedThrough(S, 1, 1); /* Feedthrough enabled */
     ssSetInputPortRequiredContiguous(S, 1, 1); /*direct input signal access*/	
 	/* Input Port 2 */
-    ssSetInputPortMatrixDimensions(S,  2, 5085, 1);
+    ssSetInputPortMatrixDimensions(S,  2, 5115, 1);
     ssSetInputPortDataType(S, 2, SS_DOUBLE);
     ssSetInputPortComplexSignal(S, 2, COMPLEX_NO); /* no complex signals suppported */
     ssSetInputPortDirectFeedThrough(S, 2, 1); /* Feedthrough enabled */
@@ -264,8 +264,8 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 	FILE *fp = NULL;
 
 	/* Simulink data */
-	const real_T *xinit = (const real_T*) ssGetInputPortSignal(S,0);
-	const real_T *x0 = (const real_T*) ssGetInputPortSignal(S,1);
+	const real_T *x0 = (const real_T*) ssGetInputPortSignal(S,0);
+	const real_T *xinit = (const real_T*) ssGetInputPortSignal(S,1);
 	const real_T *all_parameters = (const real_T*) ssGetInputPortSignal(S,2);
 	
     real_T *x01 = (real_T*) ssGetOutputPortSignal(S,0);
@@ -296,17 +296,17 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 	
 
 	/* Copy inputs */
-	for( i=0; i<20; i++)
-	{ 
-		params.xinit[i] = (double) xinit[i]; 
-	}
-
 	for( i=0; i<300; i++)
 	{ 
 		params.x0[i] = (double) x0[i]; 
 	}
 
-	for( i=0; i<5085; i++)
+	for( i=0; i<19; i++)
+	{ 
+		params.xinit[i] = (double) xinit[i]; 
+	}
+
+	for( i=0; i<5115; i++)
 	{ 
 		params.all_parameters[i] = (double) all_parameters[i]; 
 	}

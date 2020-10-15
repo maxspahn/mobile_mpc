@@ -2,9 +2,9 @@
 %
 %   OUTPUT = simplempc(PARAMS) solves a multistage problem
 %   subject to the parameters supplied in the following struct:
-%       PARAMS.xinit - column vector of length 20
 %       PARAMS.x0 - column vector of length 300
-%       PARAMS.all_parameters - column vector of length 5085
+%       PARAMS.xinit - column vector of length 19
+%       PARAMS.all_parameters - column vector of length 5115
 %
 %   OUTPUT returns the values of the last iteration of the solver where
 %       OUTPUT.x01 - column vector of size 20

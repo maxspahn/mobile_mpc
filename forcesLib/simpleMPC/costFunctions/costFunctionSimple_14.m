@@ -1,4 +1,4 @@
-function J = costFunctionSimple(z, p, pMap, i)
+function J = costFunctionSimple_14(z, p, pMap)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 x = z(1:3);
@@ -6,6 +6,9 @@ q = z(4:10);
 slack = z(11);
 u = z(12:13);
 q_dot = z(14:20);
+
+% Ugly workaround as passing i as parameter is not supported?!
+i = 14;
 
 path_index_x = pMap.refPath(1) + 3 * (i-1);
 path_index_o = path_index_x + 2;
