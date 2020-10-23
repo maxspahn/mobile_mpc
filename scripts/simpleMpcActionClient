@@ -14,19 +14,58 @@ from mm_msgs.msg import MobileRobotPose
 # goal message and the result message.
 import mobile_mpc.msg
 
+
 def createRandomArmConfig():
-    q_lim_franka_up = 0.8 * np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
-    q_lim_franka_low = 0.8 * np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
+    q_lim_franka_up = 0.8 * np.array(
+        [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]
+    )
+    q_lim_franka_low = 0.8 * np.array(
+        [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]
+    )
     q_goal = q_lim_franka_low + np.random.rand(7) * (q_lim_franka_up - q_lim_franka_low)
     q_goal = (q_lim_franka_low + q_lim_franka_up) / 2.0
-    #q_goal = np.array([0, -np.pi/4.0, 0, -3.0 * np.pi/4.0, 0, np.pi / 2.0, np.pi/4.0])
-    #base_goal = base_min + np.random.rand(3) * (base_max - base_min)
+    # base_goal = base_min + np.random.rand(3) * (base_max - base_min)
     return q_goal
+
+def homePose():
+    q_lim_franka_up = 0.8 * np.array(
+        [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]
+    )
+    q_lim_franka_low = 0.8 * np.array(
+        [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]
+    )
+    q_goal = (q_lim_franka_low + q_lim_franka_up) / 2.0
+    return q_goal
+
+def stretchedPose():
+    q = homePose()
+    q[1] = 0.0
+    q[3] = 0.0
+    q[5] = 2.0
+    return q
+
+def graspPoseRight():
+    # grasp right side
+    q_goal = np.array(
+        [
+            -np.pi / 2.0,
+            np.pi / 7.0,
+            0,
+            -2.0 * np.pi / 4.0,
+            0,
+            3.0 * np.pi / 4.0,
+            3.0 * np.pi / 4.0,
+        ]
+    )
+    return q_goal
+
 
 def mpc_client(x=0.0, y=0.0, theta=0.0):
     # Creates the SimpleActionClient, passing the type of the action
     # (FibonacciAction) to the constructor.
-    client = actionlib.SimpleActionClient("simpleMpc_server", mobile_mpc.msg.simpleMpcAction)
+    client = actionlib.SimpleActionClient(
+        "simpleMpc_server", mobile_mpc.msg.simpleMpcAction
+    )
 
     # Waits until the action server has started up and started
     # listening for goals.
@@ -35,13 +74,12 @@ def mpc_client(x=0.0, y=0.0, theta=0.0):
     goalPose.basePose.x = x
     goalPose.basePose.y = y
     goalPose.basePose.theta = theta
-    goalPose.armConfig = Float64MultiArray(data=createRandomArmConfig())
+    #goalPose.armConfig = Float64MultiArray(data=stretchedPose())
+    goalPose.armConfig = Float64MultiArray(data=homePose())
 
     # Creates a goal to send to the action server.
-    goal =  mobile_mpc.msg.simpleMpcGoal(
-        motionType="navigation",
-        goalPose=goalPose
-    )
+    goal = mobile_mpc.msg.simpleMpcGoal(motionType="navigation", goalPose=goalPose)
+    print(goal)
 
     # Sends the goal to the action server.
     client.send_goal(goal)

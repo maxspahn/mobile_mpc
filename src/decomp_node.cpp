@@ -7,6 +7,7 @@ Decomp::Decomp() : r_(1) {
   poly_pub_.push_back(nh_.advertise<decomp_ros_msgs::PolyhedronArray>("base2_polyhedron", 1, true));
   poly_pub_.push_back(nh_.advertise<decomp_ros_msgs::PolyhedronArray>("mid_polyhedron", 1, true));
   poly_pub_.push_back(nh_.advertise<decomp_ros_msgs::PolyhedronArray>("ee_polyhedron", 1, true));
+  poly_high_pub_ = nh_.advertise<decomp_ros_msgs::PolyhedronArray>("highlight_polyhedron", 1, true);
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("base1_elipsoid", 1, true));
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("base2_elipsoid", 1, true));
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("mid_elipsoid", 1, true));
@@ -213,6 +214,8 @@ void Decomp::decompose() {
     decomp_util.dilate(paths[i]);
     //es.push_back(decomp_util.get_ellipsoid());
     //polys.push_back(decomp_util.get_polyhedron());
+    polys.clear();
+    es.clear();
     es = decomp_util.get_ellipsoids();
     polys = decomp_util.get_polyhedrons();
     // Visualization
@@ -227,9 +230,26 @@ void Decomp::decompose() {
     LinearConstraint3D cs(pt_inside, polys[0].hyperplanes());
     mm_msgs::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
     constraint_pub_[i].publish(constraints);
-    polys.clear();
-    es.clear();
   }
+  /* Highlight polyhedron feature for visualization of constraint
+  Polyhedron<3> *highPoly = new Polyhedron<3>();
+  vec_E<Hyperplane<3>> hpn = polys[0].hyperplanes();
+  //highPoly->add(Hyperplane3D(Vec3f(0, 0, 0), Vec3f(0, 0, 1)));
+  highPoly->add(hpn[0]);
+  highPoly->add(hpn[1]);
+  highPoly->add(hpn[2]);
+  highPoly->add(hpn[3]);
+  highPoly->add(hpn[4]);
+  //highPoly->add(hpn[5]);
+  //highPoly->add(hpn[6]);
+  //highPoly->add(hpn[7]);
+  polys.clear();
+  polys.push_back(*highPoly);
+  decomp_ros_msgs::PolyhedronArray poly_high_msg = DecompROS::polyhedron_array_to_ros(polys);
+  poly_high_msg.header.frame_id = reference_frame_;
+  poly_high_pub_.publish(poly_high_msg);
+  */
+  
 
   // Using seeds
   double dist;

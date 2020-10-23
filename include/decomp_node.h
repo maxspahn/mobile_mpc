@@ -29,6 +29,7 @@ private:
   ros::Subscriber sLaserCloud_;
   ros::Subscriber subGlobalPath_;
   std::vector<ros::Publisher> poly_pub_;
+  ros::Publisher poly_high_pub_;
   std::vector<ros::Publisher> es_pub_;
   ros::Publisher cloud_pub_;
   std::vector<ros::Publisher> constraint_pub_;

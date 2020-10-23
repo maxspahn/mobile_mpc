@@ -8,3 +8,4 @@ std_msgs/Duration executionTime
 ---
 #feedback definition
 int32 errorFlag
+float32 curError

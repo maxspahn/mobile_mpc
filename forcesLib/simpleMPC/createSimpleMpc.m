@@ -63,12 +63,12 @@ q_lim_franka_low = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.897
 q_lim_franka_vel = [2.1750, 2.1750, 2.1750, 2.1750, 2.6100, 2.6100, 2.6100];
 q_lim_franka_torque = [87, 87, 87, 87, 12, 12, 12];
 q_lim_franka_acc = [15, 7.5, 10, 12.5, 15, 20, 20];
-wheel_lim_vel = 2;
+wheel_lim_vel = 5; % physical limit 25
+wheel_lim_back = -5;
 wheel_lim_acc = 25;
 slack_lim_low = 0;
 slack_lim_up = inf;
 velocity_safety = 1.0;
-wheel_lim_back = -2;
 
 lower_bound = [-inf, -inf, -inf, q_lim_franka_low, slack_lim_low, wheel_lim_back, wheel_lim_back, -q_lim_franka_vel];
 upper_bound = [inf, inf, inf, q_lim_franka_up, slack_lim_up, wheel_lim_vel, wheel_lim_vel, q_lim_franka_vel];
@@ -138,7 +138,7 @@ model.xinitidx = [1:10, 12:20]; % use this to specify on which variables initial
 %% Define solver options
 codeoptions = getOptions(solverName);
 codeoptions.maxit = 200;   % Maximum number of iterations
-codeoptions.printlevel = 2; % Use printlevel = 2 to print progress (but not for timings)
+codeoptions.printlevel = 0; % Use printlevel = 2 to print progress (but not for timings)
 codeoptions.optlevel = 3;   % 0: no optimization, 1: optimize for size, 2: optimize for speed, 3: optimize for size & speed
 codeoptions.timing = 1;
 codeoptions.overwrite = 1;

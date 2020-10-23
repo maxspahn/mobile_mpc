@@ -27,6 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   genmsg
   mm_msgs
+  trajectory_msgs
+  moveit_msgs
 )
 find_package(Eigen3 REQUIRED)
 find_package(decomp_util REQUIRED)

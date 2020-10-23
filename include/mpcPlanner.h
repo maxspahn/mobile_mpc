@@ -7,6 +7,9 @@
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/JointState.h"
 #include "nav_msgs/Path.h"
+#include "trajectory_msgs/JointTrajectory.h"
+#include "trajectory_msgs/MultiDOFJointTrajectory.h"
+#include "moveit_msgs/DisplayTrajectory.h"
 #include "nav_msgs/GetPlan.h"
 #include "mm_msgs/LinearConstraint3DArray.h"
 #include "mm_msgs/DynamicObstacleMsg.h"
@@ -54,7 +57,9 @@ protected:
   ros::Publisher pubLeftWheel_;
   ros::Publisher pubArm_;
   ros::Publisher pubPredTraj_;
+  ros::Publisher pubPredTrajArm_;
   ros::Publisher pubSolverInfo_;
+  ros::Publisher pubPredMove_;
   // Subscriber
   ros::Subscriber subJointPosition_;
   ros::Subscriber subConstraints_base1_;
@@ -108,6 +113,7 @@ public:
   void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr&);
   void movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
+  void movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
   void resetDumpNumber_cb(const std_msgs::Bool::ConstPtr&);
   // Setting Getting Parameters
   void getMotionParameters(std::string);

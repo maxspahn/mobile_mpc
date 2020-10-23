@@ -25,7 +25,7 @@ MpcPlanner::MpcPlanner(std::string name) :
 {
   // Setting variables and vector length
   dt1_ = 0.2;
-  dt2_ = 1.5;
+  dt2_ = 1.0;
   dumpedProblems_ = 0;
   double H;
   nh_.getParam("/mpc/timeHorizon", H);
@@ -47,8 +47,11 @@ MpcPlanner::MpcPlanner(std::string name) :
   subConstraints_ee_ = nh_.subscribe("/constraints_ee", 10, &MpcPlanner::constraints_ee_cb, this);
   subGlobalPath_ = nh_.subscribe("/spline/globalPath", 10, &MpcPlanner::globalPath_cb, this);
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
+  pubPredTrajArm_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/mpc/predicted_traj_arm", 10);
+  pubPredMove_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/mpc/jointTrajectory", 10);
   pubSolverInfo_ = nh_.advertise<mm_msgs::SolverInfo>("/mpc/solver_info", 10);
   subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcPlanner::movingObstacles_cb, this);
+  //subMovingObstacles_ = nh_.subscribe("/moving_obstacle2", 10, &MpcPlanner::movingObstacles2_cb, this);
   subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcPlanner::resetDumpNumber_cb, this);
   finalBaseGoal_.fill(0.0);
   nh_.getParam("velRedWheels", velRedWheels_);
@@ -85,6 +88,17 @@ void MpcPlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&
   movingObstacles_[4] =  data->twist.linear.y;
   movingObstacles_[5] =  data->twist.linear.z;
   movingObstacles_[6] =  data->size.data;
+}
+
+void MpcPlanner::movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+{
+  movingObstacles_[7] =  data->pose.position.x;
+  movingObstacles_[8] =  data->pose.position.y;
+  movingObstacles_[9] =  data->pose.position.z;
+  movingObstacles_[10] =  data->twist.linear.x;
+  movingObstacles_[11] =  data->twist.linear.y;
+  movingObstacles_[12] =  data->twist.linear.z;
+  movingObstacles_[13] =  data->size.data;
 }
 
 bool MpcPlanner::isCloseToTarget()
@@ -416,7 +430,7 @@ void MpcPlanner::updatePathRequest()
 int MpcPlanner::solve()
 {
   int exitFlag = simplempc_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
-  if(exitFlag < 1) dumpProblem();
+  //if(exitFlag < 1) dumpProblem();
   mm_msgs::SolverInfo info;
   info.exitFlag = (int8_t)exitFlag;
   info.nbIterations = (int16_t)mpc_info_.it;
@@ -523,14 +537,64 @@ void MpcPlanner::processOutput(int exitFlag)
 void MpcPlanner::publishPredTraj()
 {
   //ROS_INFO("Publishing predicted trajectory");
+  trajectory_msgs::JointTrajectory pred_arm_traj_msg;
+  trajectory_msgs::MultiDOFJointTrajectory pred_base_msg;
   nav_msgs::Path pred_traj_msg;
   pred_traj_msg.poses.resize(13);
+  pred_arm_traj_msg.points.resize(13);
+  pred_base_msg.points.resize(13);
   std::string refFrame;
   nh_.getParam("/reference_frame", refFrame);
   pred_traj_msg.header.frame_id = refFrame;
+  pred_arm_traj_msg.header.frame_id = refFrame;
+  pred_base_msg.header.frame_id = refFrame;
+  pred_arm_traj_msg.joint_names = {"mmrobot_joint1", "mmrobot_joint2", "mmrobot_joint3","mmrobot_joint4", "mmrobot_joint5", "mmrobot_joint6","mmrobot_joint7"};
+  pred_base_msg.joint_names = {"base_link"};
   for (int i = 0; i < 13; ++i) {
+    pred_base_msg.points[i].transforms.resize(1);
     pred_traj_msg.poses[i].header.frame_id = refFrame;
+    pred_arm_traj_msg.points[i].positions.resize(7);
+    pred_arm_traj_msg.points[i].time_from_start = ros::Duration(0.2 * i);
   }
+  pred_base_msg.points[0].transforms[0].translation.x = mpc_output_.x02[0];
+  pred_base_msg.points[1].transforms[0].translation.x = mpc_output_.x03[0];
+  pred_base_msg.points[2].transforms[0].translation.x = mpc_output_.x04[0];
+  pred_base_msg.points[3].transforms[0].translation.x = mpc_output_.x05[0];
+  pred_base_msg.points[4].transforms[0].translation.x = mpc_output_.x06[0];
+  pred_base_msg.points[5].transforms[0].translation.x = mpc_output_.x07[0];
+  pred_base_msg.points[6].transforms[0].translation.x = mpc_output_.x08[0];
+  pred_base_msg.points[7].transforms[0].translation.x = mpc_output_.x09[0];
+  pred_base_msg.points[8].transforms[0].translation.x = mpc_output_.x10[0];
+  pred_base_msg.points[9].transforms[0].translation.x = mpc_output_.x11[0];
+  pred_base_msg.points[10].transforms[0].translation.x = mpc_output_.x12[0];
+  pred_base_msg.points[11].transforms[0].translation.x = mpc_output_.x13[0];
+  pred_base_msg.points[12].transforms[0].translation.x = mpc_output_.x14[0];
+  pred_base_msg.points[0].transforms[0].translation.y = mpc_output_.x02[0];
+  pred_base_msg.points[1].transforms[0].translation.y = mpc_output_.x03[0];
+  pred_base_msg.points[2].transforms[0].translation.y = mpc_output_.x04[0];
+  pred_base_msg.points[3].transforms[0].translation.y = mpc_output_.x05[0];
+  pred_base_msg.points[4].transforms[0].translation.y = mpc_output_.x06[0];
+  pred_base_msg.points[5].transforms[0].translation.y = mpc_output_.x07[0];
+  pred_base_msg.points[6].transforms[0].translation.y = mpc_output_.x08[0];
+  pred_base_msg.points[7].transforms[0].translation.y = mpc_output_.x09[0];
+  pred_base_msg.points[8].transforms[0].translation.y = mpc_output_.x10[0];
+  pred_base_msg.points[9].transforms[0].translation.y = mpc_output_.x11[0];
+  pred_base_msg.points[10].transforms[0].translation.y = mpc_output_.x12[0];
+  pred_base_msg.points[11].transforms[0].translation.y = mpc_output_.x13[0];
+  pred_base_msg.points[12].transforms[0].translation.y = mpc_output_.x14[0];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[0].positions[i] = mpc_output_.x02[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[1].positions[i] = mpc_output_.x03[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[2].positions[i] = mpc_output_.x04[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[3].positions[i] = mpc_output_.x05[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[4].positions[i] = mpc_output_.x06[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[5].positions[i] = mpc_output_.x07[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[6].positions[i] = mpc_output_.x08[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[7].positions[i] = mpc_output_.x09[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[8].positions[i] = mpc_output_.x10[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[9].positions[i] = mpc_output_.x11[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[10].positions[i] = mpc_output_.x12[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[11].positions[i] = mpc_output_.x13[3+i];
+  for(int i = 0; i < 7; ++i) pred_arm_traj_msg.points[12].positions[i] = mpc_output_.x14[3+i];
   pred_traj_msg.poses[0].pose.position.x = mpc_output_.x02[0];
   pred_traj_msg.poses[0].pose.position.y = mpc_output_.x02[1];
   pred_traj_msg.poses[1].pose.position.x = mpc_output_.x03[0];
@@ -558,6 +622,12 @@ void MpcPlanner::publishPredTraj()
   pred_traj_msg.poses[12].pose.position.x = mpc_output_.x14[0];
   pred_traj_msg.poses[12].pose.position.y = mpc_output_.x14[1];
   pubPredTraj_.publish(pred_traj_msg);
+  pubPredTrajArm_.publish(pred_arm_traj_msg);
+  moveit_msgs::DisplayTrajectory t;
+  t.trajectory.resize(1);
+  t.trajectory[0].joint_trajectory = pred_arm_traj_msg;
+  //t.trajectory[0].multi_dof_joint_trajectory = pred_base_msg;
+  pubPredMove_.publish(t);
 }
 
 void MpcPlanner::shiftTime()
@@ -623,6 +693,8 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
     //ros::spinOnce();
     ef = solve();
     processOutput(ef);
+    feedback_.curError = computeError();
+    as_.publishFeedback(feedback_);
     counter++;
   }
   //printParams();

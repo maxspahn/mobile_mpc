@@ -15,19 +15,21 @@ mpc:
   maxError: 0.1
   rate: 1.0
   navigation:
-    safetyMarginBase: 0.35
-    safetyMarginArm: 0.15
+    safetyMarginBase: 0.15 # static case
+    safetyMarginArm: 0.15 # static case
+    # safetyMarginBase: 0.25 # dynamic case
+    # safetyMarginArm: 0.25 # dynamic case
     #arm, contour, lag, orientation, slack, u, q_dot
-    weights: [0.7, 3.5, 3.5, 1.0, 1000.0, 0.1, 10.0]
+    weights: [0.7, 5.0, 5.5, 2.0, 10000.0, 0.05, 5.0]
     #pos, orientation, arm
     errorWeights: [1.0, 1.0, 1.0]
   armMotion:
-    safetyMarginBase: 0.35
+    safetyMarginBase: 0.15
     safetyMarginArm: 0.15
-    weights: [0.7, 0.0, 0.0, 0.0, 1000000000.0, 10000000.0, 10.0]
+    weights: [0.7, 0.0, 0.0, 0.0, 1000.0, 10000000.0, 10.0]
     errorWeights: [0.0, 0.0, 1.0]
   baseMotion:
-    safetyMarginBase: 0.35
+    safetyMarginBase: 0.15
     safetyMarginArm: 0.15
-    weights: [0.00001, 3.5, 1.5, 1.0, 1000000000.0, 0.1, 100000.0]
+    weights: [0.0000001, 5.0, 1.5, 1.0, 1000.0, 0.1, 100000.0]
     errorWeights: [1.0, 1.0, 0.0]
