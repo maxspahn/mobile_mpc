@@ -23,8 +23,6 @@ def createRandomArmConfig():
         [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]
     )
     q_goal = q_lim_franka_low + np.random.rand(7) * (q_lim_franka_up - q_lim_franka_low)
-    q_goal = (q_lim_franka_low + q_lim_franka_up) / 2.0
-    # base_goal = base_min + np.random.rand(3) * (base_max - base_min)
     return q_goal
 
 def homePose():
@@ -67,45 +65,32 @@ def graspPoseRight():
 
 
 def mpc_client(x=0.0, y=0.0, theta=0.0):
-    # Creates the SimpleActionClient, passing the type of the action
-    # (FibonacciAction) to the constructor.
     client = actionlib.SimpleActionClient(
         "simpleMpc_server", mobile_mpc.msg.simpleMpcAction
     )
 
-    # Waits until the action server has started up and started
-    # listening for goals.
     client.wait_for_server()
     goalPose = MobileRobotPose()
     goalPose.basePose.x = x
     goalPose.basePose.y = y
     goalPose.basePose.theta = theta
-    #goalPose.armConfig = Float64MultiArray(data=stretchedPose())
-    #goalPose.armConfig = Float64MultiArray(data=foldedPose())
     goalPose.armConfig = Float64MultiArray(data=homePose())
 
-    # Creates a goal to send to the action server.
     goal = mobile_mpc.msg.simpleMpcGoal(motionType="navigation", goalPose=goalPose)
     # goal = mobile_mpc.msg.simpleMpcGoal(motionType="baseMotion", goalPose=goalPose)
-    print(goal)
 
-    # Sends the goal to the action server.
     client.send_goal(goal)
 
-    # Waits for the server to finish performing the action.
     client.wait_for_result()
 
-    # Prints out the result of executing the action
     result = client.get_result()
     print("Result:", result.success)
     print("Execution Time : ", result.executionTime)
-    return client.get_result()  # A FibonacciResult
+    return client.get_result()
 
 
 if __name__ == "__main__":
     try:
-        # Initializes a rospy node so that the SimpleActionClient can
-        # publish and subscribe over ROS.
         rospy.init_node("simpleMpc_client_node")
         x_des = float(sys.argv[1])
         y_des = float(sys.argv[2])

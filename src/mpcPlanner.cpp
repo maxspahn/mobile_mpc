@@ -13,7 +13,8 @@ extern void simplempc_casadi2forces( simplempc_float *x,        /* primal vars  
                                                  simplempc_float *nabla_h,  /* Jacobian of inequality constraints (column major)   */
                                                  simplempc_float *hess,     /* Hessian (column major)                              */
                                                  solver_int32_default stage,     /* stage number (0 indexed)                            */
-                                                 solver_int32_default iteration /* iteration number of solver                          */);
+                                                 solver_int32_default iteration, /* iteration number of solver                          */
+                                                 solver_int32_default threadID /* iteration number of solver                          */);
 simplempc_extfunc extfunc_eval = &simplempc_casadi2forces;
 }
 

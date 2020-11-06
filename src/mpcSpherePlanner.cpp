@@ -1,20 +1,21 @@
 #include "mpcSpherePlanner.h"
 
 extern "C" {
-extern void sphere100_casadi2forces( sphere100_float *x,        /* primal vars                                         */
-                                                 sphere100_float *y,        /* eq. constraint multiplers                           */
-                                                 sphere100_float *l,        /* ineq. constraint multipliers                        */
-                                                 sphere100_float *p,        /* parameters                                          */
-                                                 sphere100_float *f,        /* objective function (scalar)                         */
-                                                 sphere100_float *nabla_f,  /* gradient of objective function                      */
-                                                 sphere100_float *c,        /* dynamics                                            */
-                                                 sphere100_float *nabla_c,  /* Jacobian of the dynamics (column major)             */
-                                                 sphere100_float *h,        /* inequality constraints                              */
-                                                 sphere100_float *nabla_h,  /* Jacobian of inequality constraints (column major)   */
-                                                 sphere100_float *hess,     /* Hessian (column major)                              */
+extern void sphere5_casadi2forces( sphere5_float *x,        /* primal vars                                         */
+                                                 sphere5_float *y,        /* eq. constraint multiplers                           */
+                                                 sphere5_float *l,        /* ineq. constraint multipliers                        */
+                                                 sphere5_float *p,        /* parameters                                          */
+                                                 sphere5_float *f,        /* objective function (scalar)                         */
+                                                 sphere5_float *nabla_f,  /* gradient of objective function                      */
+                                                 sphere5_float *c,        /* dynamics                                            */
+                                                 sphere5_float *nabla_c,  /* Jacobian of the dynamics (column major)             */
+                                                 sphere5_float *h,        /* inequality constraints                              */
+                                                 sphere5_float *nabla_h,  /* Jacobian of inequality constraints (column major)   */
+                                                 sphere5_float *hess,     /* Hessian (column major)                              */
                                                  solver_int32_default stage,     /* stage number (0 indexed)                            */
-                                                 solver_int32_default iteration /* iteration number of solver                          */);
-sphere100_extfunc extfunc_eval = &sphere100_casadi2forces;
+                                                 solver_int32_default iteration, /* iteration number of solver                          */
+                                                 solver_int32_default threadID /* threadID of solver                          */);
+sphere5_extfunc extfunc_eval = &sphere5_casadi2forces;
 }
 
 // Constructor
@@ -355,7 +356,7 @@ void MpcSpherePlanner::updatePathRequest()
 
 int MpcSpherePlanner::solve()
 {
-  int exitFlag = sphere100_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
+  int exitFlag = sphere5_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
   //if(exitFlag < 1) dumpProblem();
   mm_msgs::SolverInfo info;
   info.exitFlag = (int8_t)exitFlag;

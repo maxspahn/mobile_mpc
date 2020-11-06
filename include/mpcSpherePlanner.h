@@ -30,9 +30,9 @@
 #include <numeric>
 
 // Forces related staff
-#include "sphere100.h"
+#include "sphere5.h"
 
-#define NSTATIC 100
+#define NSTATIC 5
 
 struct MotionType
 {
@@ -74,8 +74,8 @@ protected:
   std::array<double, 9> curU_;
   std::array<double, 35> movingObstacles_;
   std::array<double, 4 * NSTATIC> staticSpheres_;
-  unsigned int nbParams_ = 501;
-  std::array<double, 501> params_;
+  unsigned int nbParams_ = 121;
+  std::array<double, 121> params_;
   double velRedWheels_;
   double velRedArm_;
   unsigned int timeHorizon_;
@@ -94,9 +94,9 @@ protected:
   // Motion Type
   MotionType mType_;
   // Forces types
-  sphere100_params mpc_params_;
-  sphere100_output mpc_output_;
-  sphere100_info mpc_info_;
+  sphere5_params mpc_params_;
+  sphere5_output mpc_output_;
+  sphere5_info mpc_info_;
 
 public:
   MpcSpherePlanner(std::string);
