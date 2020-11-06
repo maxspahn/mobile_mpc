@@ -1,7 +1,5 @@
+<?xml version="1.0" ?>
 <launch>
-  <!-- either PositionJointInterface, VelocityJointInterface or EffortJointInterface-->
-  <!-- PositionJointInterface requires the custom panda controllers to be installed-->
-  <!-- the setting here is important when using the joystick controller-->
   <arg name="panda_hi" default="VelocityJointInterface"/>
   <arg name="boxer_control_mode" default="single_wheel"/>
 

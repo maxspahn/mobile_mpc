@@ -1,7 +1,6 @@
+<?xml version="1.0" ?>
 <launch>
-  <!-- either PositionJointInterface, VelocityJointInterface or EffortJointInterface-->
-  <!-- PositionJointInterface requires the custom panda controllers to be installed-->
-  <!-- the setting here is important when using the joystick controller-->
+  <!--
   <arg name="panda_hi" default="VelocityJointInterface"/>
   <arg name="boxer_control_mode" default="single_wheel"/>
 
@@ -10,10 +9,7 @@
     <arg name="panda_hi" value="$(arg panda_hi)"/>
   </include>
 
-  <param name="sphere_store_description"
-    command="$(find xacro)/xacro --inorder 
-      '$(find mobile_mpc)/world/mpc_test_world.urdf.xacro'"/>
-
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param sphere_store_description -urdf -model sphereStore"/>
 
+  -->
 </launch>

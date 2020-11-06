@@ -2,7 +2,8 @@
 clear; clc; close all; clearvars;
 rng('shuffle');
 
-solverName = 'simplempc';
+nbSpheres = 17;
+solverName = ['sphere', num2str(nbSpheres)];
 
 disp("DEFINE THE PATH TO YOUR FORCES AND CASADI INSTALLATION");
 pathForces = '/home/mspahn/develop/forces';
@@ -17,6 +18,7 @@ addpath('../distanceFunctions');
 addpath('../optimizationFunctions/costFunctions');
 addpath('../optimizationFunctions/ineqFunctions');
 addpath('../optimizationFunctions/dynamics');
+
 
 
 % Turn off warnings for having a too recent Gcc compiler and some
@@ -42,14 +44,13 @@ end
 
 
 %% Problem dimensions
-% Changing model.N involves creating new stage optimization functions.
 model.N = 15;                                           % horizon length
 
-pMap = generatePMap(model.N);
+pMap = generatePMapSpheres(model.N, nbSpheres);
 
-nbInequalities = pMap.nbInfPlanes + pMap.nbMovingObstacles * 4; 
+nbInequalities = pMap.nbStaticSpheres * 4 + pMap.nbMovingObstacles * 4; 
 model.nh = nbInequalities;   % number of inequality constraint functions
-n_other_param = pMap.movingObstacles(2);
+n_other_param = pMap.staticSpheres(2);
 
 
 model.nvar = 3 + 7 + 1 + 2 + 7;                     % number of variables [x, y, theta, q (size : 7), slack, u1, u2, q_dot (size : 7)]
@@ -94,24 +95,25 @@ model.objective{13} = @(z, p) costFunctionSimple_13(z, p, pMap);
 model.objective{14} = @(z, p) costFunctionSimple_14(z, p, pMap);
 model.objective{15} = @(z, p) costFunctionSimple_15(z, p, pMap);
 
-model.ineq{1} =  @(z, p) obstacleAvoidanceSimple_1(z, p, pMap);
-model.ineq{2} =  @(z, p) obst'solverNameacleAvoidanceSimple_2(z, p, pMap);
-model.ineq{3} =  @(z, p) obstacleAvoidanceSimple_3(z, p, pMap);
-model.ineq{4} =  @(z, p) obstacleAvoidanceSimple_4(z, p, pMap);
-model.ineq{5} =  @(z, p) obstacleAvoidanceSimple_5(z, p, pMap);
-model.ineq{6} =  @(z, p) obstacleAvoidanceSimple_6(z, p, pMap);
-model.ineq{7} =  @(z, p) obstacleAvoidanceSimple_7(z, p, pMap);
-model.ineq{8} =  @(z, p) obstacleAvoidanceSimple_8(z, p, pMap);
-model.ineq{9} =  @(z, p) obstacleAvoidanceSimple_9(z, p, pMap);
-model.ineq{10} = @(z, p) obstacleAvoidanceSimple_10(z, p, pMap);
-model.ineq{11} = @(z, p) obstacleAvoidanceSimple_11(z, p, pMap);
-model.ineq{12} = @(z, p) obstacleAvoidanceSimple_12(z, p, pMap);
-model.ineq{13} = @(z, p) obstacleAvoidanceSimple_13(z, p, pMap);
-model.ineq{14} = @(z, p) obstacleAvoidanceSimple_14(z, p, pMap);
-model.ineq{15} = @(z, p) obstacleAvoidanceSimple_15(z, p, pMap);
+model.ineq{1} =  @(z, p) obstacleAvoidanceSphere_1(z, p, pMap);
+model.ineq{2} =  @(z, p) obstacleAvoidanceSphere_2(z, p, pMap);
+model.ineq{3} =  @(z, p) obstacleAvoidanceSphere_3(z, p, pMap);
+model.ineq{4} =  @(z, p) obstacleAvoidanceSphere_4(z, p, pMap);
+model.ineq{5} =  @(z, p) obstacleAvoidanceSphere_5(z, p, pMap);
+model.ineq{6} =  @(z, p) obstacleAvoidanceSphere_6(z, p, pMap);
+model.ineq{7} =  @(z, p) obstacleAvoidanceSphere_7(z, p, pMap);
+model.ineq{8} =  @(z, p) obstacleAvoidanceSphere_8(z, p, pMap);
+model.ineq{9} =  @(z, p) obstacleAvoidanceSphere_9(z, p, pMap);
+model.ineq{10} = @(z, p) obstacleAvoidanceSphere_10(z, p, pMap);
+model.ineq{11} = @(z, p) obstacleAvoidanceSphere_11(z, p, pMap);
+model.ineq{12} = @(z, p) obstacleAvoidanceSphere_12(z, p, pMap);
+model.ineq{13} = @(z, p) obstacleAvoidanceSphere_13(z, p, pMap);
+model.ineq{14} = @(z, p) obstacleAvoidanceSphere_14(z, p, pMap);
+model.ineq{15} = @(z, p) obstacleAvoidanceSphere_15(z, p, pMap);
 
 %% Costs, dynamics, obstacles
 for i=1:model.N
+    % Upper/lower bounds For road boundaries
     model.hu{i} = inf(nbInequalities, 1);
     model.hl{i} = zeros(nbInequalities, 1);
     % Transition Function

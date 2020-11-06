@@ -1,6 +1,0 @@
-<launch>
-  <include file="$(find mobile_navigation)/launch/localization.launch">
-    <arg name="map_file" value="$(find mobile_mpc)/maps/mpc_test_world.yaml"/>
-    <arg name="visualize_rviz" value="False"/>
-  </include>
-</launch>

@@ -4,6 +4,9 @@ wheelSeperator: 0.48
 velRedWheels: 0.9 # 0.1
 velRedArm: 0.20 # 0.25
 mpc:
+  dt1: 0.2
+  frequency: 5.0
+  dt2: 1.0
   timeHorizon: 15
   motionTypes:
     - "/navigation"
@@ -11,14 +14,10 @@ mpc:
   goals:
     - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0, 0.0]
     - [0.0, 2.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0, 0.0]
-  timeStep: 1.0
   maxError: 0.1
-  rate: 1.0
   navigation:
-    safetyMarginBase: 0.10 # static case
-    safetyMarginArm: 0.10 # static case
-    # safetyMarginBase: 0.25 # dynamic case
-    # safetyMarginArm: 0.25 # dynamic case
+    safetyMarginBase: 0.10
+    safetyMarginArm: 0.10
     #arm, contour, lag, orientation, slack, u, q_dot
     weights: [0.7, 10.0, 5.5, 2.0, 10000.0, 0.10, 15.0]
     #pos, orientation, arm

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+  <include file="$(find mobile_mpc)/launch/mpc_gazebo.launch"/>
+  <include file="$(find mobile_mpc)/launch/mpc_components.launch"/>
+  <include file="$(find mobile_mpc)/launch/mpc_planner.launch"/>
+  <include file="$(find mobile_mpc)/launch/mpc_client.launch"/>
+</launch>

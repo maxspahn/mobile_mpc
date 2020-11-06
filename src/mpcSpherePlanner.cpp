@@ -1,43 +1,37 @@
-#include "mpcPlanner.h"
+#include "mpcSpherePlanner.h"
 
 extern "C" {
-extern void simplempc_casadi2forces( simplempc_float *x,        /* primal vars                                         */
-                                                 simplempc_float *y,        /* eq. constraint multiplers                           */
-                                                 simplempc_float *l,        /* ineq. constraint multipliers                        */
-                                                 simplempc_float *p,        /* parameters                                          */
-                                                 simplempc_float *f,        /* objective function (scalar)                         */
-                                                 simplempc_float *nabla_f,  /* gradient of objective function                      */
-                                                 simplempc_float *c,        /* dynamics                                            */
-                                                 simplempc_float *nabla_c,  /* Jacobian of the dynamics (column major)             */
-                                                 simplempc_float *h,        /* inequality constraints                              */
-                                                 simplempc_float *nabla_h,  /* Jacobian of inequality constraints (column major)   */
-                                                 simplempc_float *hess,     /* Hessian (column major)                              */
+extern void sphere100_casadi2forces( sphere100_float *x,        /* primal vars                                         */
+                                                 sphere100_float *y,        /* eq. constraint multiplers                           */
+                                                 sphere100_float *l,        /* ineq. constraint multipliers                        */
+                                                 sphere100_float *p,        /* parameters                                          */
+                                                 sphere100_float *f,        /* objective function (scalar)                         */
+                                                 sphere100_float *nabla_f,  /* gradient of objective function                      */
+                                                 sphere100_float *c,        /* dynamics                                            */
+                                                 sphere100_float *nabla_c,  /* Jacobian of the dynamics (column major)             */
+                                                 sphere100_float *h,        /* inequality constraints                              */
+                                                 sphere100_float *nabla_h,  /* Jacobian of inequality constraints (column major)   */
+                                                 sphere100_float *hess,     /* Hessian (column major)                              */
                                                  solver_int32_default stage,     /* stage number (0 indexed)                            */
                                                  solver_int32_default iteration /* iteration number of solver                          */);
-simplempc_extfunc extfunc_eval = &simplempc_casadi2forces;
+sphere100_extfunc extfunc_eval = &sphere100_casadi2forces;
 }
 
 // Constructor
-MpcPlanner::MpcPlanner(std::string name) :
-  as_(nh_, name, boost::bind(&MpcPlanner::executeCB, this, _1), false),
+MpcSpherePlanner::MpcSpherePlanner(std::string name) :
+  as_(nh_, name, boost::bind(&MpcSpherePlanner::executeCB, this, _1), false),
   action_name_(name),
-  frequency_(5.0)
+  rate_(5)
 {
   // Setting variables and vector length
-  ROS_INFO("Setting parameters from parameter space");
-  nh_.getParam("/mpc/frequency", frequency_);
-  nh_.getParam("/mpc/dt1", dt1_);
-  nh_.getParam("/mpc/dt2", dt2_);
-  nh_.getParam("/mpc/timeHorizon", timeHorizon_);
-  rate_ = new ros::Rate(frequency_);
+  dt1_ = 0.2;
+  dt2_ = 1.0;
   dumpedProblems_ = 0;
+  double H;
+  nh_.getParam("/mpc/timeHorizon", H);
+  timeHorizon_ = H;
   ROS_INFO("TIME HORIZON SET TO %d", timeHorizon_);
   globalPath_.resize(timeHorizon_);
-  nh_.getParam("/mpc/velRedWheels", velRedWheels_);
-  nh_.getParam("/mpc/velRedArm", velRedArm_);
-  getMotionParameters("navigation");
-  setConstantParameters();
-  ROS_INFO("Initializing subscribers and publisher");
   // Service Client
   makePlanClient_ = nh_.serviceClient<nav_msgs::GetPlan>("/move_base/make_plan", true);
   
@@ -46,21 +40,22 @@ MpcPlanner::MpcPlanner(std::string name) :
   pubLeftWheel_ = nh_.advertise<std_msgs::Float64>("/mmrobot/left_wheel/command", 10);
   pubArm_ = nh_.advertise<std_msgs::Float64MultiArray>("/mmrobot/multijoint_command", 10);
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
-  subJointPosition_ = nh_.subscribe("/mmrobot/curState", 10, &MpcPlanner::state_cb, this);
-  subConstraints_base1_ = nh_.subscribe("/constraints_base1", 10, &MpcPlanner::constraints_base1_cb, this);
-  subConstraints_base2_ = nh_.subscribe("/constraints_base2", 10, &MpcPlanner::constraints_base2_cb, this);
-  subConstraints_mid_ = nh_.subscribe("/constraints_mid", 10, &MpcPlanner::constraints_mid_cb, this);
-  subConstraints_ee_ = nh_.subscribe("/constraints_ee", 10, &MpcPlanner::constraints_ee_cb, this);
-  subGlobalPath_ = nh_.subscribe("/spline/globalPath", 10, &MpcPlanner::globalPath_cb, this);
+  subJointPosition_ = nh_.subscribe("/mmrobot/curState", 10, &MpcSpherePlanner::state_cb, this);
+  subStaticSpheres_ = nh_.subscribe("/static_spheres", 10, &MpcSpherePlanner::staticSpheres_cb, this);
+  subGlobalPath_ = nh_.subscribe("/spline/globalPath", 10, &MpcSpherePlanner::globalPath_cb, this);
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
   pubPredTrajArm_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/mpc/predicted_traj_arm", 10);
   pubPredMove_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/mpc/jointTrajectory", 10);
   pubSolverInfo_ = nh_.advertise<mm_msgs::SolverInfo>("/mpc/solver_info", 10);
-  subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcPlanner::movingObstacles_cb, this);
-  //subMovingObstacles_ = nh_.subscribe("/moving_obstacle2", 10, &MpcPlanner::movingObstacles2_cb, this);
-  subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcPlanner::resetDumpNumber_cb, this);
+  subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcSpherePlanner::movingObstacles_cb, this);
+  //subMovingObstacles_ = nh_.subscribe("/moving_obstacle2", 10, &MpcSpherePlanner::movingObstacles2_cb, this);
+  subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcSpherePlanner::resetDumpNumber_cb, this);
   finalBaseGoal_.fill(0.0);
-  initializePlanes();
+  nh_.getParam("velRedWheels", velRedWheels_);
+  nh_.getParam("velRedArm", velRedArm_);
+  getMotionParameters("navigation");
+  setConstantParameters();
+  initializeStaticSpheres();
   initializeMovingObstacles();
   as_.start();
   ros::spinOnce();
@@ -70,7 +65,7 @@ MpcPlanner::MpcPlanner(std::string name) :
 // Start: 
 // ******CALLBACKS******
 //
-void MpcPlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
+void MpcSpherePlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
 {
   //ROS_INFO("RECEIVED PLAN EVALUATION");
   for (unsigned int i = 0; i < timeHorizon_; ++i) {
@@ -81,7 +76,7 @@ void MpcPlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
   }
 }
 
-void MpcPlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+void MpcSpherePlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
 {
   movingObstacles_[0] =  data->pose.position.x;
   movingObstacles_[1] =  data->pose.position.y;
@@ -92,7 +87,37 @@ void MpcPlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&
   movingObstacles_[6] =  data->size.data;
 }
 
-bool MpcPlanner::isCloseToTarget()
+void MpcSpherePlanner::movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+{
+  movingObstacles_[7] =  data->pose.position.x;
+  movingObstacles_[8] =  data->pose.position.y;
+  movingObstacles_[9] =  data->pose.position.z;
+  movingObstacles_[10] =  data->twist.linear.x;
+  movingObstacles_[11] =  data->twist.linear.y;
+  movingObstacles_[12] =  data->twist.linear.z;
+  movingObstacles_[13] =  data->size.data;
+}
+
+void MpcSpherePlanner::staticSpheres_cb(const mm_msgs::StaticSphereMsg::ConstPtr& data)
+{
+  for (int i = 0; i < NSTATIC; ++i)
+  {
+    if (i < data->spheres.size()) {
+      staticSpheres_[4 * i + 0] = data->spheres[i].position.x;
+      staticSpheres_[4 * i + 1] = data->spheres[i].position.y;
+      staticSpheres_[4 * i + 2] = data->spheres[i].position.z;
+      staticSpheres_[4 * i + 3] = data->spheres[i].size.data;
+    }
+    else {
+      staticSpheres_[4 * i + 0] = 0;
+      staticSpheres_[4 * i + 1] = 0;
+      staticSpheres_[4 * i + 2] = 0;
+      staticSpheres_[4 * i + 3] = -100;
+    }
+  }
+}
+
+bool MpcSpherePlanner::isCloseToTarget()
 {
   unsigned int i;
   double baseError = 0.0;
@@ -102,7 +127,7 @@ bool MpcPlanner::isCloseToTarget()
   return baseError < 1.0 * mType_.accuracy;
 }
 
-void MpcPlanner::state_cb(const sensor_msgs::JointState::ConstPtr& data)
+void MpcSpherePlanner::state_cb(const sensor_msgs::JointState::ConstPtr& data)
 {
   //ROS_INFO("Receiving Joint States");
   // Getting state information
@@ -119,85 +144,10 @@ void MpcPlanner::state_cb(const sensor_msgs::JointState::ConstPtr& data)
   }
 }
 
-void MpcPlanner::constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
-{
-  for (int i = 0; i < NIPES; ++i)
-  {
-    if (i < data->constraints.size()) {
-      planesBase1_[4 * i + 0] = -1 * data->constraints[i].A[0];
-      planesBase1_[4 * i + 1] = -1 * data->constraints[i].A[1];
-      planesBase1_[4 * i + 2] = -1 * data->constraints[i].A[2];
-      planesBase1_[4 * i + 3] = -1 * data->constraints[i].b;
-    }
-    else {
-      planesBase1_[4 * i + 0] = 0;
-      planesBase1_[4 * i + 1] = 0;
-      planesBase1_[4 * i + 2] = 1;
-      planesBase1_[4 * i + 3] = -100;
-    }
-  }
-}
 
-void MpcPlanner::constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcSpherePlanner::resetDumpNumber_cb(const std_msgs::Bool::ConstPtr& data)
 {
-  for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
-  {
-    if (i < data->constraints.size()) {
-      planesBase2_[4 * i + 0] = -1 * data->constraints[i].A[0];
-      planesBase2_[4 * i + 1] = -1 * data->constraints[i].A[1];
-      planesBase2_[4 * i + 2] = -1 * data->constraints[i].A[2];
-      planesBase2_[4 * i + 3] = -1 * data->constraints[i].b;
-    }
-    else {
-      planesBase2_[4 * i + 0] = 0;
-      planesBase2_[4 * i + 1] = 0;
-      planesBase2_[4 * i + 2] = 1;
-      planesBase2_[4 * i + 3] = -100;
-    }
-  }
-}
-
-void MpcPlanner::constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
-{
-  for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
-  {
-    if (i < data->constraints.size()) {
-      planesMid_[4 * i + 0] = -1 * data->constraints[i].A[0];
-      planesMid_[4 * i + 1] = -1 * data->constraints[i].A[1];
-      planesMid_[4 * i + 2] = -1 * data->constraints[i].A[2];
-      planesMid_[4 * i + 3] = -1 * data->constraints[i].b;
-    }
-    else {
-      planesMid_[4 * i + 0] = 0;
-      planesMid_[4 * i + 1] = 0;
-      planesMid_[4 * i + 2] = 1;
-      planesMid_[4 * i + 3] = -100;
-    }
-  }
-}
-
-void MpcPlanner::constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
-{
-  for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
-  {
-    if (i < data->constraints.size()) {
-      planesEE_[4 * i + 0] = -1 * data->constraints[i].A[0];
-      planesEE_[4 * i + 1] = -1 * data->constraints[i].A[1];
-      planesEE_[4 * i + 2] = -1 * data->constraints[i].A[2];
-      planesEE_[4 * i + 3] = -1 * data->constraints[i].b;
-    }
-    else {
-      planesEE_[4 * i + 0] = 0;
-      planesEE_[4 * i + 1] = 0;
-      planesEE_[4 * i + 2] = 1;
-      planesEE_[4 * i + 3] = -100;
-    }
-  }
-}
-
-void MpcPlanner::resetDumpNumber_cb(const std_msgs::Bool::ConstPtr& data)
-{
-  dumpedProblems_ = 0;
+  dumpedProblems_ = 0.0;
 }
 // End: 
 // ******CALLBACKS******
@@ -206,29 +156,7 @@ void MpcPlanner::resetDumpNumber_cb(const std_msgs::Bool::ConstPtr& data)
 // Start: 
 // ******PARAMETER******
 //
-void MpcPlanner::initializePlanes()
-{
-  for (int i = 0; i < 15; ++i) {
-    planesBase1_[4 * i + 0] = 0;
-    planesBase1_[4 * i + 1] = 0;
-    planesBase1_[4 * i + 2] = 1;
-    planesBase1_[4 * i + 3] = -200;
-    planesBase2_[4 * i + 0] = 0;
-    planesBase2_[4 * i + 1] = 0;
-    planesBase2_[4 * i + 2] = 1;
-    planesBase2_[4 * i + 3] = -300;
-    planesMid_[4 * i + 0] = 0;
-    planesMid_[4 * i + 1] = 0;
-    planesMid_[4 * i + 2] = 1;
-    planesMid_[4 * i + 3] = -400;
-    planesEE_[4 * i + 0] = 0;
-    planesEE_[4 * i + 1] = 0;
-    planesEE_[4 * i + 2] = 1;
-    planesEE_[4 * i + 3] = -500;
-  }
-}
-
-void MpcPlanner::initializeMovingObstacles()
+void MpcSpherePlanner::initializeMovingObstacles()
 {
   for (int i = 0; i < 5; ++i) {
     movingObstacles_[7 * i + 0] = 0.0;
@@ -241,7 +169,17 @@ void MpcPlanner::initializeMovingObstacles()
   }
 }
 
-void MpcPlanner::getMotionParameters(std::string motionId)
+void MpcSpherePlanner::initializeStaticSpheres()
+{
+  for (int i = 0; i < NSTATIC; ++i) {
+    movingObstacles_[4 * i + 0] = 0.0;
+    movingObstacles_[4 * i + 1] = 0.0;
+    movingObstacles_[4 * i + 2] = 0.0;
+    movingObstacles_[4 * i + 3] = -100.0;
+  }
+}
+
+void MpcSpherePlanner::getMotionParameters(std::string motionId)
 {
   //ROS_INFO("GETTING MOTION TYPE RELATED PARAMETERS"); 
   nh_.getParam("/mpc/maxError", mType_.accuracy);
@@ -251,7 +189,7 @@ void MpcPlanner::getMotionParameters(std::string motionId)
   nh_.getParam("/mpc/" + motionId + "/errorWeights", mType_.errorWeights);
 }
 
-void MpcPlanner::setForcesParams()
+void MpcSpherePlanner::setForcesParams()
 {
   // Setting xinit
   for (unsigned int i = 0; i < 10; ++i) {
@@ -278,7 +216,7 @@ void MpcPlanner::setForcesParams()
   }
 }
 
-void MpcPlanner::setConstantParameters()
+void MpcSpherePlanner::setConstantParameters()
 {
   params_[0] = dt1_;
   params_[1] = dt2_;
@@ -286,7 +224,7 @@ void MpcPlanner::setConstantParameters()
   nh_.getParam("/wheelSeperator", params_[3]);
 }
 
-void MpcPlanner::setChangingParameters()
+void MpcSpherePlanner::setChangingParameters()
 {
   //ROS_INFO("SETTING CHANGING PARAMETERS");
   // Spline
@@ -302,28 +240,25 @@ void MpcPlanner::setChangingParameters()
   // SafetyMargin
   params_[64] = mType_.safetyMarginBase;
   params_[65] = mType_.safetyMarginArm;
-  // InfPlanes Base1
-  for (unsigned int i = 0; i < 15 * 4; ++i) {
-    params_[66 + i] = planesBase1_[i];
-    params_[126 + i] = planesBase2_[i];
-    params_[186 + i] = planesMid_[i];
-    params_[246 + i] = planesEE_[i];
-  }
   // Moving Obstacles
   for (unsigned int i = 0; i < 35; ++i) {
-    params_[306 + i] = movingObstacles_[i];
+    params_[66 + i] = movingObstacles_[i];
+  }
+  // Static Obstacles
+  for (unsigned int i = 0; i < (4*NSTATIC); ++i) {
+    params_[101 + i] = staticSpheres_[i];
   }
 }
 
-void MpcPlanner::clearVariables()
+void MpcSpherePlanner::clearVariables()
 {
   params_.fill(0.0);
   setConstantParameters();
-  initializePlanes();
+  initializeStaticSpheres();
   initializeMovingObstacles();
 }
 
-void MpcPlanner::resetInitialGuess()
+void MpcSpherePlanner::resetInitialGuess()
 {
   for (unsigned int t = 0; t < 15; ++t) {
     // Setting xO
@@ -337,7 +272,7 @@ void MpcPlanner::resetInitialGuess()
   }
 }
 
-void MpcPlanner::setManualParameters()
+void MpcSpherePlanner::setManualParameters()
 {
   ROS_INFO("ONLY FOR DEBUGGING PURPOSE");
   params_[0] = 2.5;
@@ -376,7 +311,7 @@ void MpcPlanner::setManualParameters()
   params_[33] = 0.5;
 }
 
-void MpcPlanner::setGoalParameters()
+void MpcSpherePlanner::setGoalParameters()
 {
   // Arm Goal
   for (unsigned int c = 0; c < 7; ++c) {
@@ -391,7 +326,7 @@ void MpcPlanner::setGoalParameters()
 // Start
 // ******ACTION******
 //
-nav_msgs::GetPlan MpcPlanner::makePathRequest(const geometry_msgs::Pose2D baseGoal)
+nav_msgs::GetPlan MpcSpherePlanner::makePathRequest(const geometry_msgs::Pose2D baseGoal)
 {
   //ROS_INFO("CREATING PATH REQUEST");
   nav_msgs::GetPlan pathPlan;
@@ -410,7 +345,7 @@ nav_msgs::GetPlan MpcPlanner::makePathRequest(const geometry_msgs::Pose2D baseGo
   return pathPlan;
 }
 
-void MpcPlanner::updatePathRequest()
+void MpcSpherePlanner::updatePathRequest()
 {
   ROS_INFO("COMPUTING NEW GLOBAL PLAN");
   myPath_.request.start.pose.position.x = curState_[0];
@@ -418,9 +353,9 @@ void MpcPlanner::updatePathRequest()
   myPath_.request.start.pose.orientation = tf::createQuaternionMsgFromYaw(curState_[2]);
 }
 
-int MpcPlanner::solve()
+int MpcSpherePlanner::solve()
 {
-  int exitFlag = simplempc_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
+  int exitFlag = sphere100_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
   //if(exitFlag < 1) dumpProblem();
   mm_msgs::SolverInfo info;
   info.exitFlag = (int8_t)exitFlag;
@@ -430,7 +365,7 @@ int MpcPlanner::solve()
   return exitFlag;
 }
 
-double MpcPlanner::computeError()
+double MpcSpherePlanner::computeError()
 {
   std::array<double, 10> jointErrors;
   unsigned int i;
@@ -457,7 +392,7 @@ double MpcPlanner::computeError()
   return curError;
 }
 
-void MpcPlanner::publishVelocities(std::array<double, 9> vel)
+void MpcSpherePlanner::publishVelocities(std::array<double, 9> vel)
 {
   //ROS_INFO("Publish Velocities");
   std_msgs::Float64 right_vel;
@@ -475,13 +410,13 @@ void MpcPlanner::publishVelocities(std::array<double, 9> vel)
   //ROS_INFO("Published Velocities");
 }
 
-void MpcPlanner::publishZeroVelocities()
+void MpcSpherePlanner::publishZeroVelocities()
 {
   std::array<double, 9> zeroVel = {0, 0, 0.000001, 0.000001, 0.000001, 0.000001, 0.000001, 0.000001, 0.000001};
   publishVelocities(zeroVel);
 }
 
-void MpcPlanner::processOutput(int exitFlag)
+void MpcSpherePlanner::processOutput(int exitFlag)
 {
   curSlack_ = mpc_output_.x02[10];
   if (exitFlag > 0) {
@@ -492,7 +427,7 @@ void MpcPlanner::processOutput(int exitFlag)
     publishVelocities(vel);
     shiftTime();
     publishPredTraj();
-    rate_->sleep();
+    rate_.sleep();
     errorFlagCounter_ = 0;
   }
   else {
@@ -521,11 +456,11 @@ void MpcPlanner::processOutput(int exitFlag)
     }
     setGoalParameters();
     setChangingParameters();
-    rate_->sleep();
+    rate_.sleep();
   }
 }
 
-void MpcPlanner::publishPredTraj()
+void MpcSpherePlanner::publishPredTraj()
 {
   //ROS_INFO("Publishing predicted trajectory");
   trajectory_msgs::JointTrajectory pred_arm_traj_msg;
@@ -621,7 +556,7 @@ void MpcPlanner::publishPredTraj()
   pubPredMove_.publish(t);
 }
 
-void MpcPlanner::shiftTime()
+void MpcSpherePlanner::shiftTime()
 {
   for (int i = 0; i < 20; ++i) {
     mpc_params_.x0[i] = mpc_output_.x02[i];
@@ -641,9 +576,10 @@ void MpcPlanner::shiftTime()
     mpc_params_.x0[i+280] = mpc_output_.x15[i];
   }
 }
- 
 
-void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
+  
+
+void MpcSpherePlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
 {
   ROS_INFO("MPC ACTION RECEIVED NEW PLAN");
   ros::Time startTime_, endTime_;
@@ -659,7 +595,7 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
   finalBaseGoal_[1] = goal->goalPose.basePose.y;
   finalBaseGoal_[2] = goal->goalPose.basePose.theta;
   oGoal_ = goal->goalPose.basePose.theta;
-  rate_->sleep();
+  rate_.sleep();
   setGoalParameters();
   getMotionParameters(goal->motionType);
   setChangingParameters();
@@ -676,6 +612,7 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
       clearVariables();
       return;
     }
+    //printParams();
     setChangingParameters();
     setForcesParams();
     // Set initial guess to all zeros
@@ -687,7 +624,6 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
     as_.publishFeedback(feedback_);
     counter++;
   }
-  //printParams();
   endTime_ = ros::Time::now(); 
   publishZeroVelocities();
   feedback_.errorFlag = 0;
@@ -701,7 +637,7 @@ void MpcPlanner::executeCB(const mobile_mpc::simpleMpcGoalConstPtr& goal)
 // Start: 
 // ******INFO******
 //
-void MpcPlanner::printOutput()
+void MpcSpherePlanner::printOutput()
 {
   ROS_INFO("Printing output");
   for (int i = 0; i < 20; ++i) {
@@ -709,10 +645,10 @@ void MpcPlanner::printOutput()
   }
 
 }
-void MpcPlanner::printParams()
+void MpcSpherePlanner::printParams()
 {
-  ROS_INFO("Printing %d parameters", 240);
-  for (int i = 64; i < 304; ++i) {
+  ROS_INFO("Printing %d parameters", 140);
+  for (int i = 100; i < 140; ++i) {
     std::cout << i << " : " << params_[i] << std::endl;
   }
   /*
@@ -727,7 +663,7 @@ void MpcPlanner::printParams()
   */
 }
 
-std::string MpcPlanner::getCurrentTimeString()
+std::string MpcSpherePlanner::getCurrentTimeString()
 {
   time_t rawtime;
   struct tm * timeinfo;
@@ -739,7 +675,7 @@ std::string MpcPlanner::getCurrentTimeString()
   return res + "_" + std::to_string(dumpedProblems_);
 }
 
-void MpcPlanner::dumpProblem()
+void MpcSpherePlanner::dumpProblem()
 {
   ROS_INFO("ATTEMPTING TO DUMP PROBLEM, nr : %d", dumpedProblems_);
   if (dumpedProblems_ >= 10) {
@@ -763,10 +699,10 @@ void MpcPlanner::dumpProblem()
   dumpedProblems_++;
 }
 
-void MpcPlanner::runNode() 
+void MpcSpherePlanner::runNode() 
 {
   while (ros::ok()){
-    rate_->sleep();
+    rate_.sleep();
     //setForcesParams();
     //printParams();
     ros::spinOnce();
@@ -777,7 +713,7 @@ void MpcPlanner::runNode()
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "simpleMpc_server");
-  MpcPlanner mpcplanner("simpleMpc_server");
+  MpcSpherePlanner mpcplanner("simpleMpc_server");
   ros::spin();
   //mpcplanner.runNode();
   return 0;

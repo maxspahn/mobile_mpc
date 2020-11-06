@@ -68,6 +68,11 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${DECOMP_UTIL_INCLUDE_DIRS}
   forcesLib/simpleMPC/simplempc/include
+  forcesLib/simpleMPC/sphere5/include
+  forcesLib/simpleMPC/sphere10/include
+  forcesLib/simpleMPC/sphere20/include
+  forcesLib/simpleMPC/sphere50/include
+  forcesLib/simpleMPC/sphere100/include
 )
 if(STATIC_MPC EQUAL 1)
   include_directories(forcesLib/mobileManipulator/static_spheres/mm_MPC/include)
@@ -140,6 +145,15 @@ add_executable(mpcplanner
 
 target_link_libraries(mpcplanner
   ${CMAKE_SOURCE_DIR}/forcesLib/simpleMPC/simplempc/lib/libsimplempc_withModel.so
+  ${catkin_LIBRARIES}
+)
+
+add_executable(mpcsphereplanner
+  src/mpcSpherePlanner.cpp
+)
+
+target_link_libraries(mpcsphereplanner
+  ${CMAKE_SOURCE_DIR}/forcesLib/simpleMPC/sphere100/lib/libsphere100_withModel.so
   ${catkin_LIBRARIES}
 )
   

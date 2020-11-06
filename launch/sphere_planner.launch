@@ -1,0 +1,5 @@
+<launch>
+  
+  <node name="simpleMpc_server" pkg="mobile_mpc" type="mpcsphereplanner" respawn="false" output="screen"/>
+
+</launch>

@@ -1,6 +1,7 @@
 <launch>
   
-  <node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/>
+  <!--node name="mpc_server" pkg="mobile_mpc" type="mpc_server" respawn="false" output="screen"/-->
+  <node name="simpleMpc_server" pkg="mobile_mpc" type="mpcplanner" respawn="false" output="screen"/>
   <!--node name="errorComputer" pkg="mobile_mpc" type="errorComputer" /-->
 
   <!--node name="rviz" type="rviz" pkg="rviz"

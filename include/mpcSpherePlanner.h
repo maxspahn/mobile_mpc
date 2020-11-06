@@ -1,5 +1,5 @@
-#ifndef MPCPLANNER_H
-#define MPCPLANNER_H
+#ifndef MPCSPHEREPLANNER_H
+#define MPCSPHEREPLANNER_H
 
 #include "ros/ros.h"
 // Messages
@@ -15,6 +15,7 @@
 #include "mm_msgs/DynamicObstacleMsg.h"
 #include "mm_msgs/NurbsEval2D.h"
 #include "mm_msgs/SolverInfo.h"
+#include "mm_msgs/StaticSphereMsg.h"
 // Action Server
 #include <actionlib/server/simple_action_server.h>
 #include <mobile_mpc/simpleMpcAction.h>
@@ -29,9 +30,9 @@
 #include <numeric>
 
 // Forces related staff
-#include "simplempc.h"
+#include "sphere100.h"
 
-#define NIPES 15
+#define NSTATIC 100
 
 struct MotionType
 {
@@ -43,11 +44,11 @@ struct MotionType
   std::vector<double> errorWeights;
 };
 
-class MpcPlanner
+class MpcSpherePlanner
 {
 protected:
   ros::NodeHandle nh_;
-  ros::Rate* rate_;
+  ros::Rate rate_;
   actionlib::SimpleActionServer<mobile_mpc::simpleMpcAction> as_;
   std::string action_name_;
   mobile_mpc::simpleMpcFeedback feedback_;
@@ -62,10 +63,7 @@ protected:
   ros::Publisher pubPredMove_;
   // Subscriber
   ros::Subscriber subJointPosition_;
-  ros::Subscriber subConstraints_base1_;
-  ros::Subscriber subConstraints_base2_;
-  ros::Subscriber subConstraints_mid_;
-  ros::Subscriber subConstraints_ee_;
+  ros::Subscriber subStaticSpheres_;
   ros::Subscriber subMovingObstacles_;
   ros::Subscriber subGlobalPath_;
   ros::Subscriber subResetDumpNumber_;
@@ -74,20 +72,16 @@ protected:
   // State variables
   std::array<double, 10> curState_;
   std::array<double, 9> curU_;
-  std::array<double, 60> planesBase1_;
-  std::array<double, 60> planesBase2_;
-  std::array<double, 60> planesMid_;
-  std::array<double, 60> planesEE_;
   std::array<double, 35> movingObstacles_;
-  unsigned int nbParams_ = 341;
-  std::array<double, 341> params_;
+  std::array<double, 4 * NSTATIC> staticSpheres_;
+  unsigned int nbParams_ = 501;
+  std::array<double, 501> params_;
+  double velRedWheels_;
+  double velRedArm_;
+  unsigned int timeHorizon_;
   std::vector<std::array<double, 3>> globalPath_;
   std::array<double, 7> armGoal_;
   std::array<double, 3> finalBaseGoal_;
-  double frequency_;
-  double velRedWheels_;
-  double velRedArm_;
-  int timeHorizon_;
   double safetyMarginBase_;
   double safetyMarginArm_;
   double oGoal_;
@@ -100,25 +94,22 @@ protected:
   // Motion Type
   MotionType mType_;
   // Forces types
-  simplempc_params mpc_params_;
-  simplempc_output mpc_output_;
-  simplempc_info mpc_info_;
+  sphere100_params mpc_params_;
+  sphere100_output mpc_output_;
+  sphere100_info mpc_info_;
 
 public:
-  MpcPlanner(std::string);
+  MpcSpherePlanner(std::string);
   // Callback functions
   void state_cb(const sensor_msgs::JointState::ConstPtr&);
-  void constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
   void globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr&);
   void movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
   void movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
+  void staticSpheres_cb(const mm_msgs::StaticSphereMsg::ConstPtr&);
   void resetDumpNumber_cb(const std_msgs::Bool::ConstPtr&);
   // Setting Getting Parameters
   void getMotionParameters(std::string);
-  void initializePlanes();
+  void initializeStaticSpheres();
   void initializeMovingObstacles();
   void setConstantParameters();
   void setChangingParameters();
@@ -148,4 +139,4 @@ public:
   void runNode();
 };
 
-#endif /* MPCPLANNER_H */
+#endif /* MPCSPHEREPLANNER_H */

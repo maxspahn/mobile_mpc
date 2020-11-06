@@ -24,6 +24,12 @@ hold(ax1, 'on');
 
 
 %% Parameters
+
+% select solver
+nbObstacles = 1;
+solver = @sphere1;
+
+
 H = 15; %needs to be consistent with generation
 
 dt1 = 1.0;
@@ -55,7 +61,9 @@ goal = [goal; goal_arm_pos];
 
 %% Set up obstacles
 
-pMap = generatePMap(H);
+
+
+pMap = generatePMapSpheres(H, nbObstacles);
 
 
 % generating empty obstacles
@@ -63,26 +71,21 @@ defaultObstacle = [0, 0, 0, -100];
 defaultMovingObstacle = [0, 0, 0, 0, 0, 0, -100];
 defaultInfPlane = [0, 0, 1, -3];
 
-nbObstacles = 0;
 obstacles = repmat(defaultObstacle', nbObstacles, 1);
 movingObstacles = repmat(defaultMovingObstacle', pMap.nbMovingObstacles, 1);
 infPlanes = repmat(defaultInfPlane', pMap.nbInfPlanes, 1);
 
 % changing the obstacles
-% obstacles(1:4) = [1; -3; 2.1; 1];
-infPlanes(1:4) = [-1, -1, 0, -8]';
-infPlanes(5:8) = [-1, 0, 0, -10]';
-infPlanes(9:12) = [0, 1, 0, -40.5]';
-infPlanes(13:16) = [1, 1, 0, -16]';
+obstacles(1:4) = [10; -10; 2.1; 4];
 
 % Plotting obstacles
 htpl = hgtransform('Parent', ax1, 'Matrix', eye(4));
-for i = 1:4
+for i = 1:0
     [xp, yp, zp, np] = infPlaneEquation(infPlanes(4 * (i - 1) + 1: 4 * (i - 1) + 4));
     plot(xp, yp, 'Parent', htpl);
 end
 
-for i=1:0
+for i=1:1
     rectangle('Parent', htpl, 'Position', [obstacles(4 * (i-1) + 1) - obstacles(4 * (i-1) + 4) obstacles(4 * (i-1) + 2) - obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4) 2 * obstacles(4 * (i-1) + 4)], 'Curvature', 1);
 end
 % Plotting goal
@@ -99,9 +102,9 @@ params = repmat(param, 1, H)';
 problem.all_parameters = params;
 
 
-ineq = obstacleAvoidanceSimple_1(problem.x0(1:20), param', pMap);
-cost = costFunctionSimple_1(problem.x0(1:20), param', pMap);
-trans = transitionFunctionSimple(10, problem.x0(1:20), params', pMap);
+% ineq = obstacleAvoidanceSimple_1(problem.x0(1:20), param', pMap);
+% cost = costFunctionSimple_1(problem.x0(1:20), param', pMap);
+% trans = transitionFunctionSimple(10, problem.x0(1:20), params', pMap);
 
 %% setup loop values
 
@@ -143,12 +146,12 @@ while t < 100
 
     
     
-    param = [dt1, dt2, r, L, base_spline1(:)', o_des goal_arm_pos', weights, safetyMarginBase, safetyMarginArm, infPlanes', movingObstacles'];
+    param = [dt1, dt2, r, L, base_spline1(:)', o_des goal_arm_pos', weights, safetyMarginBase, safetyMarginArm, infPlanes', movingObstacles', obstacles'];
     params = repmat(param, 1, H)';
     problem.all_parameters = params;
     
 
-    [output, exitflag, info] = simplempc(problem);
+    [output, exitflag, info] = solver(problem);
     fprintf("Exitflag %d Time %1.5f itartions %d\n", exitflag, info.solvetime, info.it);
     
     % Debugging via dumped files

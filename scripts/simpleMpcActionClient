@@ -37,6 +37,12 @@ def homePose():
     q_goal = (q_lim_franka_low + q_lim_franka_up) / 2.0
     return q_goal
 
+def foldedPose():
+    q = homePose()
+    q[1] = 0.5
+    q[3] = -2.5
+    return q
+
 def stretchedPose():
     q = homePose()
     q[1] = 0.0
@@ -75,10 +81,12 @@ def mpc_client(x=0.0, y=0.0, theta=0.0):
     goalPose.basePose.y = y
     goalPose.basePose.theta = theta
     #goalPose.armConfig = Float64MultiArray(data=stretchedPose())
+    #goalPose.armConfig = Float64MultiArray(data=foldedPose())
     goalPose.armConfig = Float64MultiArray(data=homePose())
 
     # Creates a goal to send to the action server.
     goal = mobile_mpc.msg.simpleMpcGoal(motionType="navigation", goalPose=goalPose)
+    # goal = mobile_mpc.msg.simpleMpcGoal(motionType="baseMotion", goalPose=goalPose)
     print(goal)
 
     # Sends the goal to the action server.
