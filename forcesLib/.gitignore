@@ -7,3 +7,11 @@
 *.so
 *.mat
 *.m~
+*_casadi.c
+*_casadi.h
+*_casadi.o
+*_casadi2forces.c
+*_casadi2forces.o
+*_py.py
+*_mex_compiler_warnings.txt
+

@@ -2,7 +2,7 @@
 clear; clc; close all; clearvars;
 rng('shuffle');
 
-nbSpheres = 17;
+nbSpheres = 5;
 solverName = ['sphere', num2str(nbSpheres)];
 
 disp("DEFINE THE PATH TO YOUR FORCES AND CASADI INSTALLATION");

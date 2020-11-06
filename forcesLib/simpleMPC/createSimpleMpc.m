@@ -95,7 +95,7 @@ model.objective{14} = @(z, p) costFunctionSimple_14(z, p, pMap);
 model.objective{15} = @(z, p) costFunctionSimple_15(z, p, pMap);
 
 model.ineq{1} =  @(z, p) obstacleAvoidanceSimple_1(z, p, pMap);
-model.ineq{2} =  @(z, p) obst'solverNameacleAvoidanceSimple_2(z, p, pMap);
+model.ineq{2} =  @(z, p) obstacleAvoidanceSimple_2(z, p, pMap);
 model.ineq{3} =  @(z, p) obstacleAvoidanceSimple_3(z, p, pMap);
 model.ineq{4} =  @(z, p) obstacleAvoidanceSimple_4(z, p, pMap);
 model.ineq{5} =  @(z, p) obstacleAvoidanceSimple_5(z, p, pMap);
