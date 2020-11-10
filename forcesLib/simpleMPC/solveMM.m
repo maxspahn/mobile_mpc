@@ -2,17 +2,12 @@ close all;
 clear;
 clc;
 
+addpath('../');
+addCustomPaths();
+
 addpath('../distanceFunctions');
-pathForces = '/home/mspahn/develop/forces';
-pathCasadi = '/home/mspahn/develop/casadi';
-
-forcesPath = genpath(pathForces);
-casadiPath = genpath(pathCasadi);
-addpath(forcesPath);
-addpath(casadiPath);
-
-addpath('costFunctions');
-addpath('ineqFunctions');
+addpath('../optimizationFunctions/costFunctions');
+addpath('../optimizationFunctions/ineqFunctions');
 
 
 %% Creating the figure

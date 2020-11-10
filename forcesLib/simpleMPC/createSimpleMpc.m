@@ -5,13 +5,8 @@ rng('shuffle');
 solverName = 'simplempc';
 
 disp("DEFINE THE PATH TO YOUR FORCES AND CASADI INSTALLATION");
-pathForces = '/home/mspahn/develop/forces';
-pathCasadi = '/home/mspahn/develop/casadi';
-
-forcesPath = genpath(pathForces);
-casadiPath = genpath(pathCasadi);
-addpath(forcesPath);
-addpath(casadiPath);
+addpath('../');
+addCustomPaths();
 
 addpath('../distanceFunctions');
 addpath('../optimizationFunctions/costFunctions');

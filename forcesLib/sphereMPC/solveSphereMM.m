@@ -2,17 +2,12 @@ close all;
 clear;
 clc;
 
+addpath('../');
+addCustomPaths();
+
 addpath('../distanceFunctions');
-pathForces = '/home/mspahn/develop/forces';
-pathCasadi = '/home/mspahn/develop/casadi';
-
-forcesPath = genpath(pathForces);
-casadiPath = genpath(pathCasadi);
-addpath(forcesPath);
-addpath(casadiPath);
-
-addpath('costFunctions');
-addpath('ineqFunctions');
+addpath('../optimizationFunctions/costFunctions');
+addpath('../optimizationFunctions/ineqFunctions');
 
 
 %% Creating the figure
@@ -26,8 +21,8 @@ hold(ax1, 'on');
 %% Parameters
 
 % select solver
-nbObstacles = 1;
-solver = @sphere1;
+nbObstacles = 5;
+solver = @sphere5;
 
 
 H = 15; %needs to be consistent with generation
