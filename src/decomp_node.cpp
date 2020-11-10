@@ -13,11 +13,11 @@ Decomp::Decomp() : r_(1) {
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("mid_elipsoid", 1, true));
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("ee_elipsoid", 1, true));
   cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("obs_cloud", 1, true);
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_base1", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_base2", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_mid", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("constraints_ee", 1, true));
-  subGlobalPath_ = nh_.subscribe("/spline/globalPath", 10, &Decomp::globalPath_cb, this);
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/base1", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/base2", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/mid", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/ee", 1, true));
+  subGlobalPath_ = nh_.subscribe("/mpc/globalPath/spline", 10, &Decomp::globalPath_cb, this);
   tfListenerPtr_ = new tf::TransformListener();
   nh_.getParam("/reference_frame", reference_frame_);
   globalPath_.resize(15);

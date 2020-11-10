@@ -24,10 +24,10 @@ class PlanTracker(object):
     def __init__(self):
         rospy.init_node("planTracker")
         self.rate = rospy.Rate(10)
-        self.plotSub_ = rospy.Subscriber("/spline/plot", Bool, self.plot_cb)
+        self.plotSub_ = rospy.Subscriber("/mpc/globalPath/plot", Bool, self.plot_cb)
         self.planSub_ = rospy.Subscriber("/move_base/NavfnROS/plan", Path,  self.path_cb)
         self.evalPub_ = rospy.Publisher(
-            "/spline/globalPath", NurbsEval2D, queue_size=10
+            "/mpc/globalPath/spline", NurbsEval2D, queue_size=10
         )
         self.curve = BSpline.Curve()
         self.curve.degree = 3
@@ -37,21 +37,16 @@ class PlanTracker(object):
         self.endTime = rospy.get_time()
         #self.maxSpeed = 0.2
         self.maxSpeed = 0.1
-        self.dt1 = 0.2
-        self.dt2 = 1.0
+        self.dt1 = rospy.get_param("mpc/dt1")
+        self.dt2 = rospy.get_param("mpc/dt2")
         self.duration = 1.0
         self.havingPlan = False
         #self.defaultPlan()
         self.curParameter = 0.0
 
     def plot_cb(self, data):
-        print(self.startTime)
-        print(self.endTime)
-        print(rospy.Time.now())
         t = (rospy.Time.now() - self.startTime) / (self.endTime - self.startTime)
-        print(t)
         a = self.curve.evaluate_single(t)
-        print(a)
         # self.curve.render()
         self.plotSpline(t)
 
@@ -78,9 +73,6 @@ class PlanTracker(object):
             curvepts[:, 0], curvepts[:, 1], color="green", linestyle="-"
         )  # evaluated curve points
         plt.plot(a[0], a[1], "ro")
-        # tanline = plt.quiver(ctarr[:, 0, 0], ctarr[:, 0, 1], ctarr[:, 1, 0], ctarr[:, 1, 1], color='blue', angles='xy', scale_units='xy', scale=1, width=0.003)  # tangents
-        # tanlinekey = plt.quiverkey(tanline, 23.75, -14.5, 35, "Tangent Vectors", coordinates='data', labelpos='W')
-        #plt.legend([cppolygon, curveplt], ["Control Points", "Evaluated Curve"])
         plt.axis([-5, 5, -5, 5])
         plt.show()
 
@@ -94,8 +86,6 @@ class PlanTracker(object):
             self.curve.degree, len(self.curve.ctrlpts)
         )
         self.havingPlan = True
-        print(self.startTime)
-        print(self.endTime)
 
     def path_cb(self, path):
         rospy.loginfo("Received Path")
@@ -109,7 +99,10 @@ class PlanTracker(object):
         o = plan.poses[-1].pose.orientation
         ol = [o.x, o.y, o.z, o.w]
         (roll, pitch, yaw) = euler_from_quaternion(ol)
-        self.finalOri = yaw
+        self.finalGoal = Pose2D()
+        self.finalGoal.x = plan.poses[-1].pose.position.x
+        self.finalGoal.y = plan.poses[-1].pose.position.y
+        self.finalGoal.theta = yaw
         self.startTime = plan.poses[0].header.stamp
         for i in range(1, len(plan.poses)):
             distance = distance + self.distance(plan.poses[i], plan.poses[i-1])
@@ -123,17 +116,28 @@ class PlanTracker(object):
             rospy.loginfo("Predicted duration : %1.2f", self.duration)
             self.endTime = self.startTime + rospy.Duration(self.duration)
             self.havingPlan = True
-            print(self.endTime)
+            self.shortPath = False
         else:
-            rospy.loginfo("Received path to short. Keeping old one")
+            rospy.loginfo("Received path to short. Setting Only Goal Pose")
+            self.havingPlan = True
+            self.shortPath = True
 
     def distance(self, a, b):
         posA = np.array([a.pose.position.x, a.pose.position.y])
         posB = np.array([b.pose.position.x, b.pose.position.y])
         return np.linalg.norm(posA - posB)
 
+    def publishShortPath(self):
+        evalNurbs = NurbsEval2D()
+        for i in range(rospy.get_param("/mpc/timeHorizon")):
+            evalNurbs.evaluations.append(self.finalGoal)
+        self.evalPub_.publish(evalNurbs)
+
     def publishTimedPlan(self):
         if (self.havingPlan == False):
+            return
+        if (self.shortPath == True):
+            self.publishShortPath()
             return
         curTime = rospy.Time.now()
         self.curParameter = (curTime.to_sec() - self.startTime.to_sec()) / self.duration
@@ -160,7 +164,7 @@ class PlanTracker(object):
                     theta = theta + np.pi
                 elif (theta > np.pi/2):
                     theta = theta - np.pi
-                #theta = self.finalOri
+                #theta = self.finalGoal[2]
             p2d = Pose2D()
             p2d.x = nurbsPoint[0]
             p2d.y = nurbsPoint[1]
