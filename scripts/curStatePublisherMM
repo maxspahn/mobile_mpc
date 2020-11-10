@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import rospy
+import numpy as np
+import tf
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+from std_msgs.msg import Float64, Float64MultiArray
+from sensor_msgs.msg import JointState
+
+
+class CurStatePublisher(object):
+    def __init__(self):
+        rospy.init_node("mmrobotStatePublisher")
+        self.rate = rospy.Rate(100)
+        self.pub = rospy.Publisher('/mmrobot/curState', JointState, queue_size=10)
+        self.tfListener = tf.TransformListener()
+        self.refFrame = rospy.get_param("/reference_frame")
+        self.subJointPosition = rospy.Subscriber(
+            "/mmrobot/joint_states", JointState, self.jointState_cb
+        )
+        self.curState = JointState();
+        self.curState.name = ["x", "y", "theta", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "left_wheel", "right_wheel"]
+        self.curState.position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.curState.velocity= [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.curState.effort= [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    def jointState_cb(self, jointStates):
+        self.curState.position[3:10] = jointStates.position[3:10]
+        self.curState.velocity[3:10] = jointStates.velocity[3:10]
+        self.curState.velocity[10:12] = jointStates.velocity[10:12]
+
+    def getBaseState(self):
+        while(True):
+            try:
+                (pos, quat) = self.tfListener.lookupTransform(self.refFrame, "/base_link", rospy.Time(0.0))
+                break
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+                rospy.loginfo("TF error : %s", e)
+                continue
+        self.curState.position[0] = pos[0];
+        self.curState.position[1] = pos[1];
+        euler = tf.transformations.euler_from_quaternion(quat)
+        self.curState.position[2] = euler[2]
+
+    def run(self):
+        while not rospy.is_shutdown():
+            self.getBaseState()
+            self.pub.publish(self.curState)
+            self.rate.sleep()
+
+
+if __name__ == "__main__":
+    myCurStatePublisher = CurStatePublisher()
+    try:
+        myCurStatePublisher.run()
+    except rospy.ROSInterruptException:
+        pass
