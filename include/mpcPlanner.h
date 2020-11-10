@@ -11,10 +11,10 @@
 #include "trajectory_msgs/MultiDOFJointTrajectory.h"
 #include "moveit_msgs/DisplayTrajectory.h"
 #include "nav_msgs/GetPlan.h"
-#include "mm_msgs/LinearConstraint3DArray.h"
-#include "mm_msgs/DynamicObstacleMsg.h"
-#include "mm_msgs/NurbsEval2D.h"
-#include "mm_msgs/SolverInfo.h"
+#include "mobile_mpc/LinearConstraint3DArray.h"
+#include "mobile_mpc/DynamicObstacleMsg.h"
+#include "mobile_mpc/NurbsEval2D.h"
+#include "mobile_mpc/SolverInfo.h"
 // Action Server
 #include <actionlib/server/simple_action_server.h>
 #include <mobile_mpc/simpleMpcAction.h>
@@ -108,13 +108,13 @@ public:
   MpcPlanner(std::string);
   // Callback functions
   void state_cb(const sensor_msgs::JointState::ConstPtr&);
-  void constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr&);
-  void globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr&);
-  void movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
-  void movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr&);
+  void constraints_base1_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr&);
+  void constraints_base2_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr&);
+  void constraints_mid_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr&);
+  void constraints_ee_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr&);
+  void globalPath_cb(const mobile_mpc::NurbsEval2D::ConstPtr&);
+  void movingObstacles_cb(const mobile_mpc::DynamicObstacleMsg::ConstPtr&);
+  void movingObstacles2_cb(const mobile_mpc::DynamicObstacleMsg::ConstPtr&);
   void resetDumpNumber_cb(const std_msgs::Bool::ConstPtr&);
   // Setting Getting Parameters
   void getMotionParameters(std::string);

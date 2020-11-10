@@ -30,11 +30,24 @@ add_action_files(
     simpleMpc.action
 )
 
+add_message_files(
+  FILES
+  LinearConstraint3D.msg
+  LinearConstraint3DArray.msg
+  DynamicObstacleMsg.msg
+  ObjectMsg.msg
+  NurbsEval2D.msg
+  SolverInfo.msg
+  SingleStaticSphere.msg
+  StaticSphereMsg.msg
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
     actionlib_msgs
     std_msgs
+    geometry_msgs
     mm_msgs
 )
 catkin_package(

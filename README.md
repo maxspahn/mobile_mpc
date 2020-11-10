@@ -9,6 +9,9 @@
 ##External dependencies
 
 [decompUtilRos](https://github.com/sikang/DecompROS)
+```
+pip install geomdl
+```
 
 ## Code generation
 

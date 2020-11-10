@@ -13,10 +13,10 @@ Decomp::Decomp() : r_(1) {
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("mid_elipsoid", 1, true));
   es_pub_.push_back(nh_.advertise<decomp_ros_msgs::EllipsoidArray>("ee_elipsoid", 1, true));
   cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("obs_cloud", 1, true);
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/base1", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/base2", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/mid", 1, true));
-  constraint_pub_.push_back(nh_.advertise<mm_msgs::LinearConstraint3DArray>("/mpc/constraints/ee", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mobile_mpc::LinearConstraint3DArray>("/mpc/constraints/base1", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mobile_mpc::LinearConstraint3DArray>("/mpc/constraints/base2", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mobile_mpc::LinearConstraint3DArray>("/mpc/constraints/mid", 1, true));
+  constraint_pub_.push_back(nh_.advertise<mobile_mpc::LinearConstraint3DArray>("/mpc/constraints/ee", 1, true));
   subGlobalPath_ = nh_.subscribe("/mpc/globalPath/spline", 10, &Decomp::globalPath_cb, this);
   tfListenerPtr_ = new tf::TransformListener();
   nh_.getParam("/reference_frame", reference_frame_);
@@ -50,7 +50,7 @@ void Decomp::checkTfListener() {
   }
 }
 
-void Decomp::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
+void Decomp::globalPath_cb(const mobile_mpc::NurbsEval2D::ConstPtr& evalNurbs)
 {
   for (unsigned int i = 0; i < 15; ++i) {
     globalPath_[i][0] = evalNurbs->evaluations[i].x;
@@ -228,7 +228,7 @@ void Decomp::decompose() {
     // Inequalities
     const auto pt_inside = (paths[i][0] + paths[i][1]) / 2;
     LinearConstraint3D cs(pt_inside, polys[0].hyperplanes());
-    mm_msgs::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
+    mobile_mpc::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
     constraint_pub_[i].publish(constraints);
   }
   /* Highlight polyhedron feature for visualization of constraint
@@ -284,7 +284,7 @@ void Decomp::decompose() {
     }
     const auto pt_inside = (paths[i][0]);
     LinearConstraint3D cs(pt_inside, hps);
-    mm_msgs::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
+    mobile_mpc::LinearConstraint3DArray constraints = linear_constraint_to_ros(cs);
     constraint_pub_[i].publish(constraints);
     polys.clear();
     es.clear();
@@ -294,11 +294,11 @@ void Decomp::decompose() {
 
 }
 
-mm_msgs::LinearConstraint3DArray Decomp::linear_constraint_to_ros(LinearConstraint3D cs)
+mobile_mpc::LinearConstraint3DArray Decomp::linear_constraint_to_ros(LinearConstraint3D cs)
 {
-  mm_msgs::LinearConstraint3DArray constraints;
+  mobile_mpc::LinearConstraint3DArray constraints;
   for (int i = 0; i < cs.A().rows() ; ++i) {
-    mm_msgs::LinearConstraint3D cm;
+    mobile_mpc::LinearConstraint3D cm;
     cm.A[0] = cs.A()(i, 0);
     cm.A[1] = cs.A()(i, 1);
     cm.A[2] = cs.A()(i, 2);

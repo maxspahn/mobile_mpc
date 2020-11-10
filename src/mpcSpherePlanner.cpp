@@ -47,7 +47,7 @@ MpcSpherePlanner::MpcSpherePlanner(std::string name) :
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
   pubPredTrajArm_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/mpc/predicted_traj_arm", 10);
   pubPredMove_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/mpc/jointTrajectory", 10);
-  pubSolverInfo_ = nh_.advertise<mm_msgs::SolverInfo>("/mpc/solver_info", 10);
+  pubSolverInfo_ = nh_.advertise<mobile_mpc::SolverInfo>("/mpc/solver_info", 10);
   subMovingObstacles_ = nh_.subscribe("/moving_obstacle", 10, &MpcSpherePlanner::movingObstacles_cb, this);
   //subMovingObstacles_ = nh_.subscribe("/moving_obstacle2", 10, &MpcSpherePlanner::movingObstacles2_cb, this);
   subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcSpherePlanner::resetDumpNumber_cb, this);
@@ -66,7 +66,7 @@ MpcSpherePlanner::MpcSpherePlanner(std::string name) :
 // Start: 
 // ******CALLBACKS******
 //
-void MpcSpherePlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
+void MpcSpherePlanner::globalPath_cb(const mobile_mpc::NurbsEval2D::ConstPtr& evalNurbs)
 {
   //ROS_INFO("RECEIVED PLAN EVALUATION");
   for (unsigned int i = 0; i < timeHorizon_; ++i) {
@@ -77,7 +77,7 @@ void MpcSpherePlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalN
   }
 }
 
-void MpcSpherePlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+void MpcSpherePlanner::movingObstacles_cb(const mobile_mpc::DynamicObstacleMsg::ConstPtr& data)
 {
   movingObstacles_[0] =  data->pose.position.x;
   movingObstacles_[1] =  data->pose.position.y;
@@ -88,7 +88,7 @@ void MpcSpherePlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::Con
   movingObstacles_[6] =  data->size.data;
 }
 
-void MpcSpherePlanner::movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+void MpcSpherePlanner::movingObstacles2_cb(const mobile_mpc::DynamicObstacleMsg::ConstPtr& data)
 {
   movingObstacles_[7] =  data->pose.position.x;
   movingObstacles_[8] =  data->pose.position.y;
@@ -99,7 +99,7 @@ void MpcSpherePlanner::movingObstacles2_cb(const mm_msgs::DynamicObstacleMsg::Co
   movingObstacles_[13] =  data->size.data;
 }
 
-void MpcSpherePlanner::staticSpheres_cb(const mm_msgs::StaticSphereMsg::ConstPtr& data)
+void MpcSpherePlanner::staticSpheres_cb(const mobile_mpc::StaticSphereMsg::ConstPtr& data)
 {
   for (int i = 0; i < NSTATIC; ++i)
   {
@@ -358,7 +358,7 @@ int MpcSpherePlanner::solve()
 {
   int exitFlag = sphere5_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
   //if(exitFlag < 1) dumpProblem();
-  mm_msgs::SolverInfo info;
+  mobile_mpc::SolverInfo info;
   info.exitFlag = (int8_t)exitFlag;
   info.nbIterations = (int16_t)mpc_info_.it;
   info.solvingTime = (double)mpc_info_.solvetime;

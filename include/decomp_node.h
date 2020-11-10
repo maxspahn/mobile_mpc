@@ -11,8 +11,8 @@
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <decomp_ros_msgs/PolyhedronArray.h>
 #include <decomp_ros_msgs/Polyhedron.h>
-#include <mm_msgs/LinearConstraint3DArray.h>
-#include "mm_msgs/NurbsEval2D.h"
+#include <mobile_mpc/LinearConstraint3DArray.h>
+#include "mobile_mpc/NurbsEval2D.h"
 #include <decomp_ros_utils.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <nav_msgs/Path.h>
@@ -45,7 +45,7 @@ private:
 public:
   Decomp();
   void cloud_callback(sensor_msgs::PointCloud2ConstPtr const&);
-  void globalPath_cb(mm_msgs::NurbsEval2D::ConstPtr const&);
+  void globalPath_cb(mobile_mpc::NurbsEval2D::ConstPtr const&);
   void lasercloud_callback(sensor_msgs::PointCloud2ConstPtr const&);
   void runNode();
   void cloud_to_vec(const sensor_msgs::PointCloud &);
@@ -53,7 +53,7 @@ public:
   void decompose();
   void processLaserCloud();
   vec_Vec3f get_link_pos(std::string);
-  mm_msgs::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
+  mobile_mpc::LinearConstraint3DArray linear_constraint_to_ros(LinearConstraint3D);
   void checkTfListener();
 };
 

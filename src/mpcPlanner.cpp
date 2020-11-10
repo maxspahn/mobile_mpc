@@ -56,7 +56,7 @@ MpcPlanner::MpcPlanner(std::string name) :
   pubPredTraj_ = nh_.advertise<nav_msgs::Path>("/mpc/predicted_trajectory", 10);
   pubPredTrajArm_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/mpc/predicted_traj_arm", 10);
   pubPredMove_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/mpc/jointTrajectory", 10);
-  pubSolverInfo_ = nh_.advertise<mm_msgs::SolverInfo>("/mpc/solver_info", 10);
+  pubSolverInfo_ = nh_.advertise<mobile_mpc::SolverInfo>("/mpc/solver_info", 10);
   subMovingObstacles_ = nh_.subscribe("/mpc/moving_obstacle", 10, &MpcPlanner::movingObstacles_cb, this);
   //subMovingObstacles_ = nh_.subscribe("/moving_obstacle2", 10, &MpcPlanner::movingObstacles2_cb, this);
   subResetDumpNumber_ = nh_.subscribe("/mpc/resetDump", 10, &MpcPlanner::resetDumpNumber_cb, this);
@@ -71,7 +71,7 @@ MpcPlanner::MpcPlanner(std::string name) :
 // Start: 
 // ******CALLBACKS******
 //
-void MpcPlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
+void MpcPlanner::globalPath_cb(const mobile_mpc::NurbsEval2D::ConstPtr& evalNurbs)
 {
   //ROS_INFO("RECEIVED PLAN EVALUATION");
   for (unsigned int i = 0; i < timeHorizon_; ++i) {
@@ -82,7 +82,7 @@ void MpcPlanner::globalPath_cb(const mm_msgs::NurbsEval2D::ConstPtr& evalNurbs)
   }
 }
 
-void MpcPlanner::movingObstacles_cb(const mm_msgs::DynamicObstacleMsg::ConstPtr& data)
+void MpcPlanner::movingObstacles_cb(const mobile_mpc::DynamicObstacleMsg::ConstPtr& data)
 {
   movingObstacles_[0] =  data->pose.position.x;
   movingObstacles_[1] =  data->pose.position.y;
@@ -120,7 +120,7 @@ void MpcPlanner::state_cb(const sensor_msgs::JointState::ConstPtr& data)
   }
 }
 
-void MpcPlanner::constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcPlanner::constraints_base1_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr& data)
 {
   for (int i = 0; i < NIPES; ++i)
   {
@@ -139,7 +139,7 @@ void MpcPlanner::constraints_base1_cb(const mm_msgs::LinearConstraint3DArray::Co
   }
 }
 
-void MpcPlanner::constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcPlanner::constraints_base2_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr& data)
 {
   for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
   {
@@ -158,7 +158,7 @@ void MpcPlanner::constraints_base2_cb(const mm_msgs::LinearConstraint3DArray::Co
   }
 }
 
-void MpcPlanner::constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcPlanner::constraints_mid_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr& data)
 {
   for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
   {
@@ -177,7 +177,7 @@ void MpcPlanner::constraints_mid_cb(const mm_msgs::LinearConstraint3DArray::Cons
   }
 }
 
-void MpcPlanner::constraints_ee_cb(const mm_msgs::LinearConstraint3DArray::ConstPtr& data)
+void MpcPlanner::constraints_ee_cb(const mobile_mpc::LinearConstraint3DArray::ConstPtr& data)
 {
   for (int i = 0; i < data->constraints.size() && i < NIPES; ++i)
   {
@@ -423,7 +423,7 @@ int MpcPlanner::solve()
 {
   int exitFlag = simplempc_solve(&mpc_params_, &mpc_output_, &mpc_info_, stdout, extfunc_eval);
   //if(exitFlag < 1) dumpProblem();
-  mm_msgs::SolverInfo info;
+  mobile_mpc::SolverInfo info;
   info.exitFlag = (int8_t)exitFlag;
   info.nbIterations = (int16_t)mpc_info_.it;
   info.solvingTime = (double)mpc_info_.solvetime;
