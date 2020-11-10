@@ -4,7 +4,7 @@
 
   <rosparam file="$(arg param_file)"/>
 
-  <node name="curStatePublisher" pkg="mobile_manipulator" type="curStatePublisherMM" />
+  <node name="curStatePublisher" pkg="mobile_mpc" type="curStatePublisherMM" />
 
   <!-- global planner from move base-->
   <include file="$(find mobile_navigation)/launch/map_creation.launch"/>
