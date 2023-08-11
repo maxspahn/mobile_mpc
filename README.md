@@ -10,6 +10,7 @@ optional:
 ##External dependencies
 
 [decompUtilRos](https://github.com/sikang/DecompROS)
+[ros_mm](https://github.com/maxspahn/ros_mm)
 ```
 pip install geomdl
 ```
